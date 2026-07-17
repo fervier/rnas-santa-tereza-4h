@@ -185,6 +185,54 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 .preds-loading{color:var(--mu);font-size:.75rem;text-align:center;padding:20px;display:flex;align-items:center;justify-content:center;gap:8px}
 .spin-sm{width:16px;height:16px;border:2px solid var(--s2);border-top-color:var(--alt);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
 
+/* ─── VISTA FAMÍLIAS ─── */
+.view-seg{display:flex;gap:0;background:var(--s2);border-radius:7px;padding:2px;margin-right:8px;flex-shrink:0}
+.view-btn{background:none;border:none;color:var(--mu);padding:4px 12px;border-radius:5px;font-size:.73rem;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
+.view-btn.active{background:var(--s1);color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.mbar{display:flex;gap:3px;align-items:center;flex-wrap:wrap}
+.mtab{background:var(--s2);border:1px solid var(--br);color:var(--mu);padding:3px 10px;border-radius:5px;font-size:.71rem;cursor:pointer;transition:.15s;white-space:nowrap}
+.mtab.active{background:var(--alt);border-color:var(--alt);color:#0b1710}
+#fam-view{display:none;margin-bottom:14px}
+.fam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.fam-card{background:var(--s1);border:1px solid var(--br);border-radius:10px;overflow:hidden}
+.fam-card-hdr{padding:11px 14px;border-bottom:1px solid var(--br);display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
+.fam-card-hdr h4{font-size:.8rem;font-weight:700;margin:0;color:var(--tx)}
+.fam-subtitle{font-size:.64rem;color:var(--mu);margin-top:1px}
+.fam-cnt{font-size:.64rem;color:var(--mu);white-space:nowrap;flex-shrink:0}
+.fam-body{padding:8px 12px 10px}
+.fam-item{display:flex;align-items:center;gap:7px;padding:5px 4px;border-radius:5px;cursor:pointer;transition:.12s}
+.fam-item:hover{background:rgba(255,255,255,.05)}
+.fam-rank{width:14px;font-size:.63rem;color:var(--mu);text-align:right;flex-shrink:0}
+.fam-info{flex:1;min-width:0}
+.fam-name{font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fam-mae{font-size:.61rem;color:var(--mu)}
+.fam-right{flex-shrink:0;text-align:right}
+.fam-val{font-size:.82rem;font-weight:700}
+.fam-bar-wrap{height:3px;border-radius:2px;background:var(--s3);overflow:hidden;margin-top:3px;width:42px}
+.fam-bar-fill{height:100%;border-radius:2px}
+/* ─── DETAIL PANEL — tags ─── */
+.dp-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.dp-tag{border-radius:999px;padding:2px 10px;font-size:.65rem;font-weight:600}
+.dp-tag.t-tipo{background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.3)}
+.dp-tag.t-conv{background:rgba(56,189,248,.12);color:#38bdf8;border:1px solid rgba(56,189,248,.3)}
+.dp-tag.t-rot{background:rgba(192,132,252,.12);color:#c084fc;border:1px solid rgba(192,132,252,.3)}
+.dp-tag.t-info{background:var(--s2);color:var(--mu);border:1px solid var(--br)}
+/* ─── DETAIL PANEL — PERS barras horizontais ─── */
+.hbar-wrap{margin:4px 0 8px}
+.hbar-row{display:grid;grid-template-columns:68px 1fr 50px;align-items:center;gap:7px;margin-bottom:5px}
+.hbar-label{font-size:.69rem;color:var(--mu);text-align:right}
+.hbar-track{height:14px;background:var(--s2);border-radius:3px;overflow:hidden}
+.hbar-fill{height:100%;border-radius:3px;transition:width .4s}
+.hbar-val{font-size:.74rem;font-weight:700}
+/* ─── DETAIL PANEL — erro grid ─── */
+.err-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:6px 0 10px}
+.err-cell{background:var(--s2);border-radius:6px;padding:7px 9px;text-align:center}
+.err-cell .el{font-size:.6rem;color:var(--mu);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em}
+.err-cell .ev{font-size:.9rem;font-weight:700}
+/* ─── DETAIL PANEL — scatter ─── */
+.scatter-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.scatter-cw{position:relative;height:170px}
+.scatter-lbl{font-size:.67rem;color:var(--mu);margin-bottom:3px}
 /* ═══ SEÇÃO A BACIA ═══ */
 #sec-bacia{background:#f5f2ec;color:#1a1a1a;padding:36px 28px 28px}
 .bacia-pill{display:inline-block;background:rgba(74,140,58,.15);color:#3d7a2e;border:1px solid rgba(74,140,58,.35);border-radius:999px;font-size:.68rem;font-weight:700;letter-spacing:.1em;padding:3px 12px;margin-bottom:14px}
@@ -249,6 +297,7 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
         <label style="color:var(--mu)">Branch:</label>
         <input id="gh-branch" style="background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:3px 7px;border-radius:5px;font-size:.74rem;width:80px" placeholder="main">
         <button onclick="saveGHConfig()" style="background:var(--alt);border:none;color:#fff;padding:3px 10px;border-radius:5px;font-size:.72rem;cursor:pointer">Salvar &amp; recarregar</button>
+        <button onclick="resetGHConfig()" style="background:var(--s3);border:1px solid var(--br);color:var(--mu);padding:3px 8px;border-radius:5px;font-size:.72rem;cursor:pointer" title="Volta para fervier/rnas-santa-tereza-4h">↺ Resetar padrão</button>
         <span style="color:var(--mu);font-size:.68rem">ou:</span>
         <label style="cursor:pointer;display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--br);border-radius:5px;padding:3px 9px;font-size:.72rem">
           <span>📊 Atualizar métricas (XLSX)</span>
@@ -282,6 +331,27 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 
 <div class="layout">
 <main id="main-area">
+
+<!-- Seletor de vista + abas de métrica (para vista Famílias) -->
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+  <div class="view-seg">
+    <button class="view-btn active" id="vbtn-tab" onclick="toggleView('tabela')">Tabela</button>
+    <button class="view-btn"        id="vbtn-fam" onclick="toggleView('familias')">Desempenho por família</button>
+  </div>
+  <div class="mbar" id="mbar-wrap" style="display:none">
+    <span style="font-size:.7rem;color:var(--mu)">Métrica:</span>
+    <button class="mtab active" onclick="setMetric('media_pers',this)">Geral</button>
+    <button class="mtab"        onclick="setMetric('PERS_treino',this)">Treino</button>
+    <button class="mtab"        onclick="setMetric('PERS_validacao',this)">Validação</button>
+    <button class="mtab"        onclick="setMetric('PERS_teste',this)">Teste</button>
+    <button class="mtab"        onclick="setMetric('score_equilibrio',this)">Equilíbrio</button>
+  </div>
+</div>
+
+<!-- Vista Famílias -->
+<div id="fam-view">
+  <div id="fam-grid" class="fam-grid"></div>
+</div>
 
 <div class="fbar">
   <label>Tipo:</label>
@@ -411,8 +481,12 @@ const GH_DEFAULTS={user:'fervier',repo:'rnas-santa-tereza-4h',branch:'main'};
 
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
 function ghCfg(){
-  const u=lsGet('gh_user')||GH_DEFAULTS.user;
+  // Valida: se o valor salvo for um placeholder, ignora
+  const placeholders=['seu_usuario_github','seu-usuario',''];
+  const raw_u=lsGet('gh_user')||'';
+  const u=placeholders.includes(raw_u.trim())?GH_DEFAULTS.user:raw_u.trim()||GH_DEFAULTS.user;
   const r=lsGet('gh_repo')||GH_DEFAULTS.repo;
   const b=lsGet('gh_branch')||GH_DEFAULTS.branch;
   return{user:u,repo:r,branch:b,base:`https://raw.githubusercontent.com/${u}/${r}/${b}`};
@@ -423,6 +497,10 @@ function saveGHConfig(){
   const b=document.getElementById('gh-branch').value.trim();
   if(!u||!r||!b){alert('Preencha todos os campos.');return;}
   lsSet('gh_user',u);lsSet('gh_repo',r);lsSet('gh_branch',b);
+  PRED_IDX.clear();init();
+}
+function resetGHConfig(){
+  lsDel('gh_user');lsDel('gh_repo');lsDel('gh_branch');
   PRED_IDX.clear();init();
 }
 function fillGHInputs(){
@@ -696,15 +774,136 @@ async function fetchPreds(mn){
 }
 
 // ════════════════════════════════════════════════════
+// VISTA FAMÍLIAS
+// ════════════════════════════════════════════════════
+let viewMode='tabela', famMetric='media_pers';
+
+function toggleView(mode){
+  viewMode=mode;
+  document.getElementById('vbtn-tab').classList.toggle('active',mode==='tabela');
+  document.getElementById('vbtn-fam').classList.toggle('active',mode==='familias');
+  document.getElementById('mbar-wrap').style.display=mode==='familias'?'flex':'none';
+  document.getElementById('fam-view').style.display=mode==='familias'?'block':'none';
+  const hide=mode==='familias';
+  ['.sg','.cg2x','.cf','.cg2','.cg3','.tc','.fbar'].forEach(sel=>{
+    document.querySelectorAll(sel).forEach(el=>el.style.display=hide?'none':'');
+  });
+  if(mode==='familias')buildFamiliaView();
+}
+
+function setMetric(metric,btn){
+  famMetric=metric;
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  buildFamiliaView();
+}
+
+function metricVal(r,metric){
+  return r[metric]!=null?r[metric]:null;
+}
+
+function metricLabel(metric){
+  return {media_pers:'PERS Geral',PERS_treino:'PERS Treino',PERS_validacao:'PERS Val',PERS_teste:'PERS Teste',score_equilibrio:'Equilíbrio'}[metric]||metric;
+}
+
+function getFamily(r){
+  const fr=(r.fonte_rodada||'').toUpperCase();
+  if(r.tipo==='CONV') return {key:'CONV',label:'4h — Convencional',sub:'Modelos convencionais',color:'var(--conv)'};
+  if(fr.includes('QUINTA')||fr.includes('R5_R7')||fr.includes('RODADA_R7'))
+    return {key:'ALT_R5',label:'4h ALT — Quinta Rodada (R5)',sub:'10 combos · rotação R7',color:'var(--alt)'};
+  if(fr.includes('SEXTA'))
+    return {key:'ALT_R6',label:'4h ALT — Sexta Rodada (R6)',sub:'10 combos × 25 rotações',color:'var(--alt)'};
+  return {key:'OUTRO',label:'4h — Outros',sub:'',color:'#94a3b8'};
+}
+
+function buildFamiliaView(){
+  const grid=document.getElementById('fam-grid');if(!grid)return;
+  // Agrupar modelos
+  const groups=new Map();
+  for(const r of RAW){
+    const fam=getFamily(r);
+    if(!groups.has(fam.key))groups.set(fam.key,{fam,models:[]});
+    groups.get(fam.key).models.push(r);
+  }
+  // Ordenar grupos e construir HTML
+  const order=['CONV','ALT_R5','ALT_R6','OUTRO'];
+  grid.innerHTML='';
+  order.forEach(key=>{
+    if(!groups.has(key))return;
+    const {fam,models}=groups.get(key);
+    grid.appendChild(buildFamCard(fam,models));
+  });
+}
+
+function buildFamCard(fam,models){
+  const metric=famMetric;
+  const sorted=models.filter(r=>metricVal(r,metric)!=null)
+    .sort((a,b)=>(metricVal(b,metric)||0)-(metricVal(a,metric)||0));
+  const threshold=0.5;
+  const above=sorted.filter(r=>(metricVal(r,metric)||0)>=threshold).length;
+  const top=sorted.slice(0,10);
+  const best=metricVal(sorted[0],metric)||0;
+
+  const col=v=>v>=0.8?'#4ade80':v>=0.6?'#fbbf24':'#f87171';
+  const items=top.map((r,i)=>{
+    const v=metricVal(r,metric)??0;
+    const pct=best>0?(v/best*100):0;
+    const mae=r.MAE_teste!=null?r.MAE_teste.toFixed(1)+' cm':'—';
+    const name=r.combo_id||r.modelo.slice(-20);
+    const encm=encodeURIComponent(r.modelo);
+    return `<div class="fam-item" onclick="openFromFam('${encm}')">
+      <span class="fam-rank">${i+1}</span>
+      <div class="fam-info">
+        <div class="fam-name" title="${r.modelo}">${name}</div>
+        <div class="fam-mae">MAE teste ${mae}</div>
+      </div>
+      <div class="fam-right">
+        <div class="fam-val" style="color:${col(v)}">${v.toFixed(3)}</div>
+        <div class="fam-bar-wrap"><div class="fam-bar-fill" style="width:${pct.toFixed(0)}%;background:${col(v)}"></div></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const card=document.createElement('div');
+  card.className='fam-card';
+  card.innerHTML=`
+    <div class="fam-card-hdr">
+      <div>
+        <h4 style="color:${fam.color}">${fam.label}</h4>
+        <div class="fam-subtitle">${fam.sub}</div>
+      </div>
+      <div class="fam-cnt">${above} de ${models.length}<br>acima de ${threshold}</div>
+    </div>
+    <div class="fam-body">${items||'<div style="color:var(--mu);font-size:.75rem;padding:8px 0">Sem dados</div>'}</div>`;
+  return card;
+}
+
+function openFromFam(enc){
+  // Mudar para vista tabela, filtrar e abrir painel
+  const mn=decodeURIComponent(enc);
+  const r=RAW.find(x=>x.modelo===mn);if(!r)return;
+  selRow=r;selModelName=mn;
+  const dp=document.getElementById('dp');dp.classList.add('open');
+  document.getElementById('dp-backdrop').classList.add('open');
+  _renderDetailPanel(r);
+}
+
+// ════════════════════════════════════════════════════
 // DETAIL PANEL
 // ════════════════════════════════════════════════════
 async function showDetail(enc,trEl){
   const mn=decodeURIComponent(enc);
   const r=RAW.find(x=>x.modelo===mn);if(!r)return;
   document.querySelectorAll('#tbody tr').forEach(t=>t.classList.remove('sel'));
-  trEl.classList.add('sel');selRow=r;selModelName=mn;
+  if(trEl)trEl.classList.add('sel');
+  selRow=r;selModelName=mn;
   const dp=document.getElementById('dp');dp.classList.add('open');
   document.getElementById('dp-backdrop').classList.add('open');
+  _renderDetailPanel(r);
+}
+
+async function _renderDetailPanel(r){
+  const mn=r.modelo;
   document.getElementById('dp-title').textContent=r.combo_id||r.modelo;
   document.getElementById('dp-sub').textContent=`${r.tipo} · ${r.fonte_rodada}`;
 
@@ -713,38 +912,85 @@ async function showDetail(enc,trEl){
   const matUrl=`${c.base}/modelos/${enc2}/${enc2}.mat`;
   const csvUrl=`${c.base}/modelos/${enc2}/${enc2}_previsoes.csv`;
 
-  const pg2=(k)=>{const v=r[k];const col=v==null?'#94a3b8':v>=0.8?'#22c55e':v>=0.6?'#f59e0b':'#ef4444';const pct=v!=null?Math.max(0,Math.min(100,v*100)):0;return `<div class="pc"><div class="pl">${k.replace('PERS_','PERS ')}</div><div class="pv" style="color:${col}">${v!=null?v.toFixed(4):'—'}</div><div class="pb" style="background:${col};width:${pct}%"></div></div>`;}
-  const dprow=(k,v,cls='')=>`<div class="dp-row"><span class="k">${k}</span><span class="v ${cls}">${v}</span></div>`;
+  // Tags
+  const isConv=r.tipo==='CONV';
+  const tagTipo=`<span class="dp-tag ${isConv?'t-conv':'t-tipo'}">${r.tipo}</span>`;
+  const tagRot=r.rotacao?`<span class="dp-tag t-rot">rotação ${r.rotacao}</span>`:'';
+  const tagNh=`<span class="dp-tag t-info">${r.neuronios} neurônios</span>`;
+  const tagNi=`<span class="dp-tag t-info">${r.n_inputs} inputs</span>`;
+  const tagNtot=`<span class="dp-tag t-info">N=${r.N_treino+r.N_validacao+r.N_teste}</span>`;
+  const rodLabel=(r.fonte_rodada||'').replace('RNA_4H_','').replace(/_/g,' ').toLowerCase();
+  const tagRod=`<span class="dp-tag t-info">${rodLabel}</span>`;
+
+  // PERS barras horizontais
+  const persRows=[
+    ['Geral', r.media_pers],
+    ['Treino', r.PERS_treino],
+    ['Validação', r.PERS_validacao],
+    ['Teste', r.PERS_teste],
+  ].map(([lbl,v])=>{
+    const col=v==null?'#475569':v>=0.8?'#4ade80':v>=0.6?'#fbbf24':'#f87171';
+    const pct=v!=null?Math.max(0,Math.min(100,v*100)):0;
+    const neg=v!=null&&v<0?`<span style="color:#f87171;font-size:.65rem">⚠</span> `:'';
+    return `<div class="hbar-row">
+      <span class="hbar-label">${lbl}</span>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${pct}%;background:${col}"></div></div>
+      <span class="hbar-val" style="color:${col}">${neg}${v!=null?v.toFixed(3):'—'}</span>
+    </div>`;
+  }).join('');
+
+  // MAE grid
+  const maeGrid=[
+    ['Treino',r.MAE_treino,r.E95_treino],
+    ['Val',   r.MAE_val,   r.E95_val],
+    ['Teste', r.MAE_teste, r.E95_teste],
+  ].map(([lbl,mae,e95])=>`
+    <div class="err-cell">
+      <div class="el">${lbl}</div>
+      <div class="ev">${mae!=null?mae.toFixed(1):'—'} cm</div>
+      <div class="el" style="margin-top:4px">E95</div>
+      <div class="ev" style="font-size:.78rem">${e95!=null?e95.toFixed(1):'—'} cm</div>
+    </div>`).join('');
+
+  const dprow=(k,v)=>`<div class="dp-row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
   const ghBtn=(lbl,icon,url,fn)=>`<a class="fbtn" href="${url}" target="_blank" download="${fn}"><span class="fi">${icon}</span><div class="fd"><div class="fn">${lbl}</div><div class="fs">${fn}</div></div><span class="fa">↓ GitHub</span></a>`;
 
   document.getElementById('dp-body').innerHTML=`
+    <div class="dp-tags">${tagTipo}${tagRod}${tagRot}${tagNh}${tagNi}${tagNtot}</div>
+
+    <div class="dp-sec"><h4>Persistência por recorte</h4>
+      <div class="hbar-wrap">${persRows}</div>
+      ${dprow('Spread PERS',f4(r.spread_pers))}
+      ${dprow('Score Equilíbrio',f4(r.score_equilibrio))}
+    </div>
+
+    <div class="dp-sec"><h4>Erro em centímetros</h4>
+      <div class="err-grid3">${maeGrid}</div>
+      ${dprow('CE Treino',f4(r.CE_treino))} ${dprow('CE Val',f4(r.CE_val))} ${dprow('CE Teste',f4(r.CE_teste))}
+    </div>
+
     <div class="dp-sec" id="dp-hydro-sec">
-      <h4>🌊 Hidrogramas</h4>
+      <h4>🌊 Hidrogramas — por Evento</h4>
       <div class="preds-loading"><div class="spin-sm"></div>&nbsp;Buscando previsões do GitHub…</div>
     </div>
-    <div class="dp-sec"><h4>PERS</h4>
-      <div class="pg4">${pg2('PERS_treino')}${pg2('PERS_validacao')}${pg2('PERS_teste')}${pg2('PERS_geral')}</div>
-      ${dprow('Média PERS',f4(r.media_pers))}${dprow('Spread',f4(r.spread_pers),r.spread_pers!=null&&r.spread_pers<0.1?'g':r.spread_pers!=null&&r.spread_pers>0.2?'b':'')}
-      ${dprow('Score Equilíbrio',f4(r.score_equilibrio),r.score_equilibrio!=null&&r.score_equilibrio>=0.9?'g':'')}
+
+    <div class="dp-sec" id="dp-scatter-sec" style="display:none">
+      <h4>Dispersão Observado × RNA</h4>
+      <div class="scatter-row">
+        <div><div class="scatter-lbl">Validação · <span id="sc-n-val">—</span> pts</div><div class="scatter-cw"><canvas id="sc-val"></canvas></div></div>
+        <div><div class="scatter-lbl">Teste · <span id="sc-n-te">—</span> pts</div><div class="scatter-cw"><canvas id="sc-te"></canvas></div></div>
+      </div>
     </div>
-    <div class="dp-sec"><h4>MAE &amp; E95 (cm)</h4>
-      ${dprow('MAE Val',f2(r.MAE_val)+' cm')}${dprow('MAE Teste',f2(r.MAE_teste)+' cm')}
-      ${dprow('E95 Val',r.E95_val!=null?r.E95_val.toFixed(1)+' cm':'—')}${dprow('E95 Teste',r.E95_teste!=null?r.E95_teste.toFixed(1)+' cm':'—')}
-    </div>
-    <div class="dp-sec"><h4>CE</h4>
-      ${dprow('CE Treino',f4(r.CE_treino))}${dprow('CE Val',f4(r.CE_val))}${dprow('CE Teste',f4(r.CE_teste))}${dprow('CE Geral',f4(r.CE_geral))}
-    </div>
+
     <div class="dp-sec"><h4>Arquivos</h4>
-      ${ghBtn('MATLAB (.mat)','🧠',matUrl,mn+'.mat')}
-      ${ghBtn('Previsões CSV','📈',csvUrl,mn+'_previsoes.csv')}
+      ${ghBtn('Modelo MATLAB (.mat)','🧠',matUrl,mn+'.mat')}
+      ${ghBtn('Previsões (.csv)','📈',csvUrl,mn+'_previsoes.csv')}
     </div>
     <div class="dp-sec"><h4>Configuração</h4>
-      ${dprow('Tipo',r.tipo)}${dprow('Neurônios',r.neuronios)}${dprow('Inputs',r.n_inputs)}
-      ${dprow('N Treino',r.N_treino)}${dprow('N Val',r.N_validacao)}${dprow('N Teste',r.N_teste)}
-      ${dprow('Status',r.status||'—')}${dprow('Rotação',r.rotacao||'—')}
+      ${dprow('N Treino',r.N_treino)} ${dprow('N Validação',r.N_validacao)} ${dprow('N Teste',r.N_teste)}
     </div>`;
 
-  // Async: fetch predictions and render hydro
+  // Buscar previsões e montar hidrogramas + scatter
   const preds=await fetchPreds(mn);
   const obs=r.obs_key?OBS[r.obs_key]:null;
   let parts=null;
@@ -766,7 +1012,39 @@ async function showDetail(enc,trEl){
   }
   const hydroSec=document.getElementById('dp-hydro-sec');
   if(hydroSec)hydroSec.outerHTML=buildHydroHtml(r,parts,preds);
-  if(parts)initHydroCharts(parts,r.tipo);
+  if(parts){initHydroCharts(parts,r.tipo);renderScatterPlots(parts,r.tipo);}
+}
+
+function renderScatterPlots(parts,tipo){
+  const scSec=document.getElementById('dp-scatter-sec');
+  if(!scSec)return;
+  scSec.style.display='block';
+  const col=tipo==='CONV'?'rgba(56,189,248,.6)':'rgba(74,222,128,.6)';
+  ['val','te'].forEach(key=>{
+    const phase=key==='val'?'val':'teste';
+    const data=parts[phase].obs.map(([,,obsv],i)=>({x:obsv,y:parts[phase].pred[i]})).filter(p=>p.x!=null&&p.y!=null);
+    const nEl=document.getElementById(`sc-n-${key}`);if(nEl)nEl.textContent=data.length;
+    const canvas=document.getElementById(`sc-${key}`);if(!canvas)return;
+    if(CH[`sc-${key}`]){CH[`sc-${key}`].destroy();delete CH[`sc-${key}`];}
+    const allV=data.flatMap(p=>[p.x,p.y]);
+    const mn2=Math.min(...allV),mx=Math.max(...allV);
+    CH[`sc-${key}`]=new Chart(canvas,{
+      type:'scatter',
+      data:{datasets:[
+        {label:'RNA × Obs',data,backgroundColor:col,pointRadius:2.5,pointHoverRadius:4},
+        {label:'Acerto perfeito',data:[{x:mn2,y:mn2},{x:mx,y:mx}],type:'line',borderColor:'#475569',borderWidth:1,pointRadius:0,borderDash:[4,3]}
+      ]},
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:{duration:0},
+        plugins:{legend:{labels:{boxWidth:8,font:{size:9}}},tooltip:{callbacks:{label:ctx=>`obs: ${ctx.raw.x?.toFixed(1)} | RNA: ${ctx.raw.y?.toFixed(1)}`}}},
+        scales:{
+          x:{title:{display:true,text:'observado (cm)',font:{size:8}},grid:{color:'#1e3422'},ticks:{maxTicksLimit:5,font:{size:8}}},
+          y:{title:{display:true,text:'RNA (cm)',font:{size:8}},grid:{color:'#1e3422'},ticks:{maxTicksLimit:5,font:{size:8}}}
+        }
+      }
+    });
+  });
+}
 }
 
 // ════════════════════════════════════════════════════
