@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard 4h — RNAs Santa Tereza</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  /* ALT = verde da marca | CONV = azul-ciano (diferenciação) */
+  --alt:#4ade80;--altA:rgba(74,222,128,.48);
+  --conv:#38bdf8;--convA:rgba(56,189,248,.48);
+  --obs:#fbbf24;--obsA:rgba(251,191,36,.8);
+  --pred-c:#38bdf8;--pred-a:#4ade80;
+  /* Paleta de fundo verde-escura (combina com o verde da bacia) */
+  --bg:#0b1710;--s1:#0f2014;--s2:#172c1c;--s3:#1f3c26;
+  --tx:#f0fdf4;--mu:#7ea882;--br:#1e3422;
+  --good:#4ade80;--mid:#fbbf24;--bad:#f87171;
+  /* Degradê da marca: verde → amarelo → laranja → vermelho */
+  --brand-green:#4a8c3a;--brand-yellow:#c8be3a;
+  --brand-orange:#d27828;--brand-red:#c03830;
+  --pw:min(860px,92vw);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',system-ui,sans-serif}
+
+/* Header */
+header{background:var(--s1);border-bottom:none;padding:12px 22px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand-green) 0%,var(--brand-yellow) 40%,var(--brand-orange) 70%,var(--brand-red) 100%)}
+header h1{font-size:.95rem;font-weight:600;color:var(--tx)}
+header p{color:var(--mu);font-size:.72rem}
+.brand-name{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:linear-gradient(90deg,var(--brand-green),var(--brand-yellow),var(--brand-orange),var(--brand-red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2px}
+.brand-basin{flex-shrink:0}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.67rem;font-weight:700}
+.tag-alt{background:rgba(59,130,246,.18);color:var(--alt);border:1px solid rgba(59,130,246,.3)}
+.tag-conv{background:rgba(16,185,129,.18);color:var(--conv);border:1px solid rgba(16,185,129,.3)}
+
+/* Upload */
+.up-section{background:var(--s1);border-bottom:1px solid var(--br);padding:12px 22px}
+.up-section summary{cursor:pointer;font-size:.8rem;font-weight:600;color:var(--mu);display:flex;align-items:center;gap:7px;user-select:none}
+.up-section[open] summary{color:var(--tx);margin-bottom:12px}
+.up-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.up-card{border:2px dashed var(--br);border-radius:9px;padding:14px 16px;position:relative;cursor:pointer;transition:.2s}
+.up-card:hover{border-color:var(--mu)}
+.up-card.ok-xlsx{border-color:var(--mid);border-style:solid}
+.up-card.ok-files{border-color:var(--good);border-style:solid}
+.up-card input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.up-card h4{font-size:.82rem;font-weight:600;margin-bottom:2px}
+.up-card p{font-size:.72rem;color:var(--mu)}
+.ustat{margin-top:7px;font-size:.72rem;font-weight:600;color:var(--mu)}
+.ustat.ok{color:var(--good)}.ustat.warn{color:var(--mid)}
+.bgnew{background:rgba(34,197,94,.15);color:var(--good);border:1px solid rgba(34,197,94,.25);border-radius:3px;padding:0 5px;font-size:.62rem;font-weight:700}
+
+/* Layout */
+.layout{display:flex}
+main{flex:1;padding:14px 20px;min-width:0;transition:margin-right .3s}
+main.shifted{margin-right:0}
+#dp-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:199;display:none;backdrop-filter:blur(2px)}
+#dp-backdrop.open{display:block}
+
+/* Filters */
+.fbar{background:var(--s1);border:1px solid var(--br);border-radius:8px;padding:9px 13px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fbar label{color:var(--mu);font-size:.71rem;white-space:nowrap}
+.fbar select,.fbar input[type=text]{background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:3px 7px;border-radius:5px;font-size:.74rem}
+.ftabs{display:flex;gap:3px}
+.ftab{background:var(--s2);border:1px solid var(--br);color:var(--mu);padding:3px 9px;border-radius:5px;font-size:.71rem;cursor:pointer;transition:.15s}
+.ftab.active{color:#fff}
+.ftab.ta.active{background:var(--s3);border-color:var(--s3)}
+.ftab.tc.active{background:var(--conv);border-color:var(--conv)}
+.ftab.talt.active{background:var(--alt);border-color:var(--alt)}
+.sep{width:1px;background:var(--br);height:20px}
+
+/* Stats */
+.sg{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:14px}
+.sc{background:var(--s1);border:1px solid var(--br);border-radius:8px;padding:10px 12px}
+.sc .lb{color:var(--mu);font-size:.64rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.sc .vl{font-size:1.15rem;font-weight:700}
+.sc .sb{color:var(--mu);font-size:.65rem;margin-top:1px}
+
+/* Compare */
+.cg2x{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.cbox{background:var(--s1);border:1px solid var(--br);border-radius:8px;padding:13px}
+.cbox h3{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
+.cbox.cv h3{color:var(--conv)}.cbox.ca h3{color:var(--alt)}
+.mr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--br)}
+.mr:last-child{border-bottom:none}
+.mr .mn{font-size:.71rem;color:var(--mu)}.mr .mv{font-size:.84rem;font-weight:700}
+
+/* Charts main */
+.cg2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.cg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px}
+.cc{background:var(--s1);border:1px solid var(--br);border-radius:8px;padding:13px}
+.cc h3,.cf h3{font-size:.68rem;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.cw{position:relative;height:210px}
+.cf{background:var(--s1);border:1px solid var(--br);border-radius:8px;padding:13px;margin-bottom:14px}
+.cf .cw{height:240px}
+
+/* Table */
+.tc{background:var(--s1);border:1px solid var(--br);border-radius:8px;overflow:hidden;margin-bottom:14px}
+.th2{padding:9px 14px;border-bottom:1px solid var(--br);display:flex;align-items:center;justify-content:space-between}
+.th2 h3{font-size:.68rem;font-weight:600;color:var(--mu);text-transform:uppercase;letter-spacing:.05em}
+.tw{overflow-x:auto;max-height:420px;overflow-y:auto}
+table{width:100%;border-collapse:collapse;font-size:.74rem}
+th{background:var(--s2);padding:6px 9px;text-align:left;font-size:.64rem;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;cursor:pointer;white-space:nowrap;position:sticky;top:0;z-index:1}
+th:hover{color:var(--tx)}
+td{padding:6px 9px;border-bottom:1px solid var(--br);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.03);cursor:pointer}
+tr.sel td{background:rgba(59,130,246,.1)!important;border-left:2px solid var(--alt)}
+tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var(--conv)}
+.fw{font-weight:600}.mu2{color:var(--mu);font-size:.65rem}
+.g{color:var(--good)}.m{color:var(--mid)}.b{color:var(--bad)}
+.bw{display:inline-block;width:32px;height:4px;background:var(--s2);border-radius:2px;margin-left:3px;vertical-align:middle;overflow:hidden}
+.bf{height:100%;border-radius:2px}
+.bst{background:rgba(34,197,94,.15);color:var(--good);border:1px solid rgba(34,197,94,.25);border-radius:3px;padding:0 3px;font-size:.57rem;font-weight:700;margin-left:2px;vertical-align:middle}
+.dot-f{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--good);margin-left:4px;vertical-align:middle}
+.pg{display:flex;align-items:center;gap:6px;padding:7px 14px;border-top:1px solid var(--br);font-size:.71rem;color:var(--mu)}
+.pg button{background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:2px 8px;border-radius:4px;cursor:pointer;font-size:.7rem}
+.pg button:disabled{opacity:.35;cursor:default}
+
+/* ═══ DETAIL PANEL ═══ */
+#dp{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);width:var(--pw);max-height:92vh;background:var(--s1);border:1px solid var(--br);border-radius:14px;z-index:200;overflow-y:auto;transition:transform .25s cubic-bezier(.4,0,.2,1),opacity .25s;display:flex;flex-direction:column;opacity:0;pointer-events:none;box-shadow:0 24px 60px rgba(0,0,0,.6)}
+#dp.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
+.dp-hdr{padding:14px 16px;border-bottom:1px solid var(--br);display:flex;align-items:flex-start;justify-content:space-between;position:sticky;top:0;background:var(--s1);z-index:1}
+.dp-hdr h2{font-size:.88rem;font-weight:600;line-height:1.3}
+.dp-hdr .sub{font-size:.7rem;color:var(--mu);margin-top:2px}
+.dp-close{background:var(--s2);border:1px solid var(--br);color:var(--mu);width:26px;height:26px;border-radius:5px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-left:8px}
+.dp-close:hover{color:var(--tx)}
+.dp-body{padding:16px 24px;flex:1}
+.dp-sec{margin-bottom:16px}
+.dp-sec h4{font-size:.66rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--br)}
+.dp-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
+.dp-row .k{font-size:.72rem;color:var(--mu)}.dp-row .v{font-size:.8rem;font-weight:600}
+.pg4{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.pc{background:var(--s2);border-radius:6px;padding:9px 11px;text-align:center}
+.pc .pl{font-size:.62rem;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.pc .pv{font-size:1.2rem;font-weight:700}
+.pc .pb{height:3px;border-radius:2px;margin-top:5px}
+.fbtn{display:flex;align-items:center;gap:9px;background:var(--s2);border:1px solid var(--br);border-radius:7px;padding:9px 12px;text-decoration:none;color:var(--tx);transition:.15s;cursor:pointer;margin-bottom:7px}
+.fbtn:hover{border-color:var(--mu)}
+.fbtn.na{opacity:.4;cursor:default}
+.fbtn .fi{font-size:1.2rem;flex-shrink:0}
+.fbtn .fd{flex:1}
+.fbtn .fn{font-size:.75rem;font-weight:600;margin-bottom:1px}
+.fbtn .fs{font-size:.65rem;color:var(--mu)}
+.fbtn .fa{font-size:.67rem;color:var(--good);font-weight:600}
+
+/* ═══ HYDRO CHARTS TABS ═══ */
+.ev-list{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px}
+.ev-btn{background:var(--s2);border:1px solid var(--br);color:var(--mu);padding:3px 7px;border-radius:4px;font-size:.71rem;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:background .15s;line-height:1.4}
+.ev-btn:hover{background:#334155;color:var(--tx)}
+.ev-btn.active{background:#0f172a;border-color:#10b981;color:var(--tx)}
+.phase-badge{border-radius:3px;padding:1px 4px;font-size:.6rem;font-weight:700;color:#fff;line-height:1.4}
+
+.ev-select{background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:4px 8px;border-radius:5px;font-size:.74rem;margin-bottom:10px;width:100%}
+.hcw{position:relative;height:180px;margin-bottom:8px}
+.hcw-big{position:relative;height:300px;margin-bottom:8px}
+.ev-stats{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:8px}
+.ev-stat{background:var(--s2);border-radius:5px;padding:6px 8px;text-align:center}
+.ev-stat .el{font-size:.62rem;color:var(--mu);margin-bottom:2px}
+.ev-stat .ev{font-size:.88rem;font-weight:700}
+.no-data{text-align:center;padding:30px 12px;color:var(--mu);font-size:.78rem}
+.upload-hint{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:6px;padding:10px 12px;font-size:.73rem;color:var(--mu);text-align:center;margin-bottom:10px}
+.upload-hint strong{color:var(--tx)}
+
+@media(max-width:1100px){.cg3,.sg{grid-template-columns:1fr 1fr}.up-row{grid-template-columns:1fr}}
+@media(max-width:700px){.cg2,.cg3,.sg,.cg2x,.up-row{grid-template-columns:1fr}main{padding:10px}}
+
+/* GitHub bar */
+#gh-bar{background:var(--s1);border-bottom:1px solid var(--br);padding:9px 22px}
+#gh-bar details>summary{display:inline;list-style:none}
+#gh-bar details>summary::-webkit-details-marker{display:none}
+/* Loading overlay */
+#loading-overlay{position:fixed;inset:0;background:rgba(11,23,16,.88);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+#loading-overlay.hidden{display:none}
+.spin{width:36px;height:36px;border:3px solid var(--s2);border-top-color:var(--alt);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-msg{color:var(--mu);font-size:.85rem}
+.load-err{color:var(--bad);font-size:.82rem;max-width:420px;text-align:center;line-height:1.5}
+.load-err button{margin-top:8px;background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:4px 12px;border-radius:5px;cursor:pointer;font-size:.8rem;display:block;margin-left:auto;margin-right:auto}
+/* Detail panel loading */
+.preds-loading{color:var(--mu);font-size:.75rem;text-align:center;padding:20px;display:flex;align-items:center;justify-content:center;gap:8px}
+.spin-sm{width:16px;height:16px;border:2px solid var(--s2);border-top-color:var(--alt);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+</style>
+</head>
+<body>
+
+<header>
+  <!-- Silhueta estilizada da Bacia Taquari-Antas -->
+  <svg class="brand-basin" viewBox="0 0 64 72" width="36" height="40" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="baciag" x1="0%" y1="100%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#4a8c3a"/>
+        <stop offset="35%"  stop-color="#c8be3a"/>
+        <stop offset="65%"  stop-color="#d27828"/>
+        <stop offset="100%" stop-color="#c03830"/>
+      </linearGradient>
+    </defs>
+    <path d="M18,68 L6,54 L4,38 L10,24 L8,12 L18,4 L32,6 L46,10 L58,22 L60,38 L54,54 L44,64 L30,70 Z" fill="url(#baciag)"/>
+  </svg>
+  <div>
+    <div class="brand-name">Previne Taquari-Antas</div>
+    <h1>RNAs Santa Tereza — 4h</h1>
+    <p>Bacia Protegida, Comunidade Segura · ALT × CONV</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:5px;align-items:center">
+    <span class="tag tag-alt">ALT</span>
+    <span class="tag tag-conv">CONV</span>
+    <span id="hdr-cnt" style="color:var(--mu);font-size:.71rem;margin-left:5px"></span><span id="hdr-src" style="color:var(--mu);font-size:.68rem;margin-left:8px"></span>
+  </div>
+</header>
+
+<div class="up-section" id="gh-bar">
+  <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <span style="font-size:.8rem;font-weight:600">🔗 GitHub</span>
+    <span id="gh-status" style="font-size:.76rem;color:var(--mu)">⏳ Carregando dados…</span>
+    <button onclick="reloadGH()" style="background:var(--s2);border:1px solid var(--br);color:var(--mu);padding:2px 9px;border-radius:5px;font-size:.7rem;cursor:pointer;margin-left:auto">↺ Recarregar</button>
+    <details style="font-size:.72rem">
+      <summary style="cursor:pointer;color:var(--mu)">⚙ Configuração</summary>
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <label style="color:var(--mu)">Usuário:</label>
+        <input id="gh-user" style="background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:3px 7px;border-radius:5px;font-size:.74rem;width:150px" placeholder="seu_usuario_github">
+        <label style="color:var(--mu)">Repo:</label>
+        <input id="gh-repo" style="background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:3px 7px;border-radius:5px;font-size:.74rem;width:200px" placeholder="rnas-santa-tereza-4h">
+        <label style="color:var(--mu)">Branch:</label>
+        <input id="gh-branch" style="background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:3px 7px;border-radius:5px;font-size:.74rem;width:80px" placeholder="main">
+        <button onclick="saveGHConfig()" style="background:var(--alt);border:none;color:#fff;padding:3px 10px;border-radius:5px;font-size:.72rem;cursor:pointer">Salvar &amp; recarregar</button>
+        <span style="color:var(--mu);font-size:.68rem">ou:</span>
+        <label style="cursor:pointer;display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--br);border-radius:5px;padding:3px 9px;font-size:.72rem">
+          <span>📊 Atualizar métricas (XLSX)</span>
+          <input type="file" id="f-xlsx" accept=".xlsx,.xls" style="display:none" onchange="loadExcel(event)">
+        </label>
+        <span id="stat-xlsx" style="font-size:.7rem;color:var(--mu)"></span>
+      </div>
+    </details>
+  </div>
+</div>
+
+<div class="layout">
+<main id="main-area">
+
+<div class="fbar">
+  <label>Tipo:</label>
+  <div class="ftabs">
+    <div class="ftab ta active" onclick="sf('tipo','all',this)">Todos</div>
+    <div class="ftab tc"        onclick="sf('tipo','CONV',this)">CONV</div>
+    <div class="ftab talt"      onclick="sf('tipo','ALT',this)">ALT</div>
+  </div>
+  <div class="sep"></div>
+  <label>Rodada:</label><select id="sel-rod" onchange="af()"><option value="">Todas</option></select>
+  <div class="sep"></div>
+  <label>Neurônios:</label><select id="sel-nh" onchange="af()"><option value="">Todos</option></select>
+  <div class="sep"></div>
+  <label>N° inputs:</label><select id="sel-ni" onchange="af()"><option value="">Todos</option></select>
+  <div class="sep"></div>
+  <label>Buscar:</label><input type="text" id="srch" placeholder="combo / modelo..." oninput="af()" style="width:155px">
+  <div class="sep"></div>
+  <label>Ordenar:</label>
+  <select id="srt" onchange="af()">
+    <option value="PERS_teste_d">↓ PERS Teste</option>
+    <option value="PERS_teste_a">↑ PERS Teste</option>
+    <option value="media_pers_d">↓ Média PERS</option>
+    <option value="score_equilibrio_d">↓ Score Equil.</option>
+    <option value="spread_pers_a">↑ Spread</option>
+    <option value="MAE_teste_a">↑ MAE Teste</option>
+    <option value="combo_id_a">A-Z Combo</option>
+  </select>
+</div>
+
+<div class="sg">
+  <div class="sc"><div class="lb">Total modelos</div><div class="vl" id="s0">—</div><div class="sb" id="s0b">—</div></div>
+  <div class="sc"><div class="lb">Melhor PERS Teste</div><div class="vl g" id="s1">—</div><div class="sb" id="s1b">—</div></div>
+  <div class="sc"><div class="lb">Média PERS Teste</div><div class="vl" id="s2">—</div><div class="sb" id="s2b">—</div></div>
+  <div class="sc"><div class="lb">PERS Teste ≥ 0.70</div><div class="vl" id="s3">—</div><div class="sb" id="s3b">—</div></div>
+  <div class="sc"><div class="lb">Melhor Score Equil.</div><div class="vl g" id="s4">—</div><div class="sb" id="s4b">—</div></div>
+  <div class="sc"><div class="lb">Com hidrograma</div><div class="vl" id="s-hyd">0</div><div class="sb">modelos com previsões</div></div>
+</div>
+
+<div class="cg2x">
+  <div class="cbox cv"><h3>🟢 CONV — Médias</h3>
+    <div class="mr"><span class="mn">PERS Treino</span><span class="mv" id="cb-tr">—</span></div>
+    <div class="mr"><span class="mn">PERS Val</span><span class="mv" id="cb-vl">—</span></div>
+    <div class="mr"><span class="mn">PERS Teste</span><span class="mv" id="cb-te">—</span></div>
+    <div class="mr"><span class="mn">Spread</span><span class="mv" id="cb-sp">—</span></div>
+    <div class="mr"><span class="mn">MAE Teste</span><span class="mv" id="cb-mae">—</span></div>
+  </div>
+  <div class="cbox ca"><h3>🔵 ALT — Médias</h3>
+    <div class="mr"><span class="mn">PERS Treino</span><span class="mv" id="ab-tr">—</span></div>
+    <div class="mr"><span class="mn">PERS Val</span><span class="mv" id="ab-vl">—</span></div>
+    <div class="mr"><span class="mn">PERS Teste</span><span class="mv" id="ab-te">—</span></div>
+    <div class="mr"><span class="mn">Spread</span><span class="mv" id="ab-sp">—</span></div>
+    <div class="mr"><span class="mn">MAE Teste</span><span class="mv" id="ab-mae">—</span></div>
+  </div>
+</div>
+
+<div class="cf"><h3>Ranking — PERS Teste (top 50) <span style="color:var(--conv);font-weight:400">■ CONV</span> <span style="color:var(--alt);font-weight:400">■ ALT</span></h3><div class="cw"><canvas id="c-rank"></canvas></div></div>
+<div class="cg2">
+  <div class="cc"><h3>PERS por fase — Média ALT vs CONV</h3><div class="cw"><canvas id="c-fases"></canvas></div></div>
+  <div class="cc"><h3>PERS Val × PERS Teste</h3><div class="cw"><canvas id="c-sc"></canvas></div></div>
+</div>
+<div class="cg3">
+  <div class="cc"><h3>Distribuição Spread PERS</h3><div class="cw"><canvas id="c-spread"></canvas></div></div>
+  <div class="cc"><h3>Score Equilíbrio × PERS Teste</h3><div class="cw"><canvas id="c-eq"></canvas></div></div>
+  <div class="cc"><h3>MAE Teste × PERS Teste</h3><div class="cw"><canvas id="c-mae"></canvas></div></div>
+</div>
+
+<div class="tc">
+  <div class="th2">
+    <h3>Tabela <span style="font-weight:400;font-size:.63rem;margin-left:5px">clique numa linha → hidrograma + detalhes</span></h3>
+    <span id="tbl-cnt" style="font-size:.7rem;color:var(--mu)">—</span>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr>
+        <th>#</th><th>Tipo</th><th onclick="sc2('combo_id')">Combo↕</th>
+        <th onclick="sc2('PERS_treino')">PERS Tr↕</th>
+        <th onclick="sc2('PERS_validacao')">PERS Val↕</th>
+        <th onclick="sc2('PERS_teste')">PERS Teste↕</th>
+        <th onclick="sc2('media_pers')">Média↕</th>
+        <th onclick="sc2('spread_pers')">Spread↕</th>
+        <th onclick="sc2('score_equilibrio')">Eq↕</th>
+        <th onclick="sc2('MAE_val')">MAE Val↕</th>
+        <th onclick="sc2('MAE_teste')">MAE Teste↕</th>
+        <th onclick="sc2('E95_teste')">E95↕</th>
+        <th>nh</th><th>inp</th><th>🌊</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="pg">
+    <button id="pb" onclick="cp(-1)" disabled>‹</button>
+    <span id="pi">—</span>
+    <button id="nb" onclick="cp(1)">›</button>
+    <span style="margin-left:auto">
+      <label style="font-size:.69rem">Linhas:
+        <select onchange="ps=+this.value;pg=0;rt()" style="background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:2px 5px;border-radius:4px;font-size:.69rem">
+          <option value="30">30</option><option value="50" selected>50</option>
+          <option value="100">100</option><option value="9999">Todos</option>
+        </select>
+      </label>
+    </span>
+  </div>
+</div>
+</main>
+
+<!-- ════════════ BACKDROP + DETAIL PANEL ════════════ -->
+<div id="dp-backdrop" onclick="closePanel()"></div>
+<div id="dp">
+  <div class="dp-hdr">
+    <div>
+      <div id="dp-title" class="fw" style="font-size:.88rem">Selecione um modelo</div>
+      <div id="dp-sub" style="font-size:.69rem;color:var(--mu);margin-top:2px"></div>
+    </div>
+    <button class="dp-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="dp-body" id="dp-body">
+    <p style="color:var(--mu);font-size:.78rem;text-align:center;padding:36px 0">Clique em uma linha da tabela para ver detalhes e hidrogramas.</p>
+  </div>
+</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+// GITHUB CONFIG — edite aqui ou via ⚙ no topo
+// ════════════════════════════════════════════════════
+const GH_DEFAULTS={user:'fervier',repo:'rnas-santa-tereza-4h',branch:'main'};
+
+function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+function ghCfg(){
+  const u=lsGet('gh_user')||GH_DEFAULTS.user;
+  const r=lsGet('gh_repo')||GH_DEFAULTS.repo;
+  const b=lsGet('gh_branch')||GH_DEFAULTS.branch;
+  return{user:u,repo:r,branch:b,base:`https://raw.githubusercontent.com/${u}/${r}/${b}`};
+}
+function saveGHConfig(){
+  const u=document.getElementById('gh-user').value.trim();
+  const r=document.getElementById('gh-repo').value.trim();
+  const b=document.getElementById('gh-branch').value.trim();
+  if(!u||!r||!b){alert('Preencha todos os campos.');return;}
+  lsSet('gh_user',u);lsSet('gh_repo',r);lsSet('gh_branch',b);
+  PRED_IDX.clear();init();
+}
+function fillGHInputs(){
+  const c=ghCfg();
+  const gu=document.getElementById('gh-user');const gr=document.getElementById('gh-repo');const gb=document.getElementById('gh-branch');
+  if(gu)gu.value=c.user;if(gr)gr.value=c.repo;if(gb)gb.value=c.branch;
+}
+
+// ════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════
+let RAW=[],OBS={};
+let FLT=[],pg=0,ps=50,sk='PERS_teste',sd='d';
+const F={tipo:'all',rod:'',nh:'',ni:''};
+const CH={},PRED_IDX=new Map();
+let selRow=null,selModelName=null;
+
+Chart.defaults.color='#94a3b8';Chart.defaults.borderColor='#334155';
+Chart.defaults.font.family="'Segoe UI',system-ui,sans-serif";Chart.defaults.font.size=10;
+
+// ════════════════════════════════════════════════════
+// LOADING OVERLAY
+// ════════════════════════════════════════════════════
+function showLoading(visible,errMsg){
+  let ov=document.getElementById('loading-overlay');
+  if(!ov){
+    ov=document.createElement('div');ov.id='loading-overlay';
+    ov.innerHTML='<div class="spin"></div><div class="load-msg" id="load-msg">Carregando dados do GitHub…</div><div class="load-err hidden" id="load-err"></div>';
+    document.body.appendChild(ov);
+  }
+  if(visible){
+    ov.classList.remove('hidden');
+    const lm=document.getElementById('load-msg');if(lm){lm.textContent='Carregando dados do GitHub…';lm.classList.remove('hidden');}
+    const le=document.getElementById('load-err');if(le)le.classList.add('hidden');
+  } else if(errMsg){
+    const lm=document.getElementById('load-msg');if(lm)lm.classList.add('hidden');
+    const le=document.getElementById('load-err');
+    if(le){le.innerHTML=`❌ Erro ao carregar dados:<br><code style="font-size:.75rem;word-break:break-all">${errMsg}</code><br><small>Verifique usuário/repo em ⚙ acima e clique "Salvar &amp; recarregar".</small><button onclick="document.getElementById('loading-overlay').classList.add('hidden')">Fechar</button>`;le.classList.remove('hidden');}
+  } else {
+    ov.classList.add('hidden');
+  }
+}
+
+// ════════════════════════════════════════════════════
+// INIT — fetch from GitHub
+// ════════════════════════════════════════════════════
+async function init(){
+  fillGHInputs();
+  showLoading(true);
+  const c=ghCfg();
+  const ghStatus=document.getElementById('gh-status');
+  if(ghStatus)ghStatus.textContent=`⏳ Buscando de github.com/${c.user}/${c.repo}…`;
+  try{
+    const[metResp,obsResp]=await Promise.all([
+      fetch(`${c.base}/data/metricas_4h.json`),
+      fetch(`${c.base}/data/observados.json`)
+    ]);
+    if(!metResp.ok)throw new Error(`metricas_4h.json → HTTP ${metResp.status}. Verifique usuário/repo/branch.`);
+    if(!obsResp.ok)throw new Error(`observados.json → HTTP ${obsResp.status}`);
+    RAW=await metResp.json();
+    OBS=await obsResp.json();
+    fill('sel-rod',[...new Set(RAW.map(r=>r.fonte_rodada))].sort());
+    fill('sel-nh',[...new Set(RAW.map(r=>r.neuronios))].sort((a,b)=>+a-+b));
+    fill('sel-ni',[...new Set(RAW.map(r=>r.n_inputs))].sort((a,b)=>+a-+b));
+    af();
+    const hdrCnt=document.getElementById('hdr-cnt');if(hdrCnt)hdrCnt.textContent=`${RAW.length} modelos`;
+    const hdrSrc=document.getElementById('hdr-src');if(hdrSrc)hdrSrc.textContent=`· ${c.user}/${c.repo}`;
+    if(ghStatus)ghStatus.textContent=`✓ ${RAW.length} modelos — ${c.user}/${c.repo}`;
+    showLoading(false);
+    // AUTO-TESTE: verifica se fetch de CSV funciona (diagnóstico)
+    try{
+      const testMn=(RAW.find(x=>x.obs_key==='R5_R7')||{}).modelo;
+      if(testMn){
+        const enc2=encodeURIComponent(testMn);
+        const testUrl=`${c.base}/modelos/${enc2}/${enc2}_previsoes.csv`;
+        const tr=await fetch(testUrl);
+        const tt=await tr.text();
+        const tv=tt.trim().split('\n').map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v));
+        if(ghStatus)ghStatus.textContent+=` | 🧪 CSV: ${tr.ok&&tv.length?'✅ '+tv.length+' vals':'❌ HTTP '+tr.status+' ('+tv.length+' vals)'}`;
+      }
+    }catch(e2){if(ghStatus)ghStatus.textContent+=` | 🧪 CSV: ❌ ${e2}`;}
+  }catch(e){
+    if(ghStatus)ghStatus.textContent=`❌ ${e.message}`;
+    showLoading(false,e.message);
+  }
+}
+async function reloadGH(){PRED_IDX.clear();await init();}
+window.addEventListener('load',init);
+
+function fill(id,vals){const el=document.getElementById(id);el.innerHTML='<option value="">Todos</option>'+vals.map(v=>`<option>${v}</option>`).join('');}
+
+// ════════════════════════════════════════════════════
+// EXCEL UPLOAD (sobrescreve métricas localmente)
+// ════════════════════════════════════════════════════
+async function loadExcel(evt){
+  const file=evt.target.files[0];if(!file)return;
+  const stat=document.getElementById('stat-xlsx');
+  stat.textContent='⏳ Lendo...';stat.className='ustat warn';
+  try{
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array'});
+    const nd=[];
+    for(const[sn,tp] of [['4H_CONV','CONV'],['4H_ALT','ALT']]){
+      if(!wb.SheetNames.includes(sn)) continue;
+      const rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:null});
+      for(const row of rows){
+        const f=v=>v!=null?parseFloat(v)||null:null;
+        const s=v=>v!=null?String(v).trim():'';
+        const i=v=>v!=null?parseInt(v)||null:null;
+        const fr=s(row.fonte_rodada);
+        nd.push({tipo:tp,fonte_rodada:fr,rotacao:s(row.rotacao),modelo:s(row.modelo),combo_id:s(row.combo_id),
+          n_inputs:s(row.n_inputs),neuronios:s(row.neuronios),
+          N_treino:i(row.N_treino),N_validacao:i(row.N_validacao),N_teste:i(row.N_teste),
+          PERS_geral:f(row.PERS_geral),PERS_treino:f(row.PERS_treino),PERS_validacao:f(row.PERS_validacao),PERS_teste:f(row.PERS_teste),
+          score_equilibrio:f(row.score_equilibrio),media_pers:f(row.media_pers),spread_pers:f(row.spread_pers),
+          MAE_geral:f(row.MAE_geral_cm),MAE_val:f(row.MAE_validacao_cm),MAE_teste:f(row.MAE_teste_cm),
+          E95_geral:f(row.E95_geral_cm),E95_val:f(row.E95_validacao_cm),E95_teste:f(row.E95_teste_cm),
+          CE_geral:f(row.CE_geral),CE_treino:f(row.CE_treino),CE_val:f(row.CE_validacao),CE_teste:f(row.CE_teste),
+          status:s(row.status_modelo),
+          obs_key:fr.includes('R5_R7')||fr.includes('QUINTA')?'R5_R7':fr.includes('R6')?'R6':null
+        });
+      }
+    }
+    if(!nd.length){stat.textContent='⚠ Abas 4H não encontradas';stat.className='ustat warn';return;}
+    RAW=nd;fill('sel-rod',[...new Set(RAW.map(r=>r.fonte_rodada))].sort());
+    fill('sel-nh',[...new Set(RAW.map(r=>r.neuronios))].sort((a,b)=>+a-+b));
+    fill('sel-ni',[...new Set(RAW.map(r=>r.n_inputs))].sort((a,b)=>+a-+b));
+    af();
+    stat.textContent=`✓ ${nd.length} modelos de "${file.name}"`;stat.className='ustat ok';
+    document.querySelector('.up-card').classList.add('ok-xlsx');
+  }catch(e){stat.textContent=`⚠ Erro: ${e.message}`;stat.className='ustat warn';}
+}
+
+// ════════════════════════════════════════════════════
+// FILTERS
+// ════════════════════════════════════════════════════
+function sf(k,v,el){F[k]=v;el.closest('.ftabs').querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));el.classList.add('active');af();}
+function af(){
+  const rod=document.getElementById('sel-rod').value,nh=document.getElementById('sel-nh').value,
+        ni=document.getElementById('sel-ni').value,srch=document.getElementById('srch').value.toLowerCase(),
+        srt=document.getElementById('srt').value;
+  [sk,sd]=srt.endsWith('_d')?[srt.slice(0,-2),'d']:[srt.slice(0,-2),'a'];
+  FLT=RAW.filter(r=>{
+    if(F.tipo!=='all'&&r.tipo!==F.tipo)return false;
+    if(rod&&r.fonte_rodada!==rod)return false;
+    if(nh&&r.neuronios!==nh)return false;
+    if(ni&&r.n_inputs!==ni)return false;
+    if(srch&&!r.combo_id.toLowerCase().includes(srch)&&!r.modelo.toLowerCase().includes(srch))return false;
+    return true;
+  });
+  doSort();pg=0;upStats();upBoxes();upCharts();rt();
+  document.getElementById('hdr-cnt').textContent=`${FLT.length} de ${RAW.length}`;
+}
+function sc2(c){if(sk===c)sd=sd==='d'?'a':'d';else{sk=c;sd='d';}doSort();rt();}
+function doSort(){FLT.sort((a,b)=>{let av=a[sk]??(sd==='d'?-Infinity:Infinity),bv=b[sk]??(sd==='d'?-Infinity:Infinity);if(typeof av==='string')return sd==='a'?av.localeCompare(bv):bv.localeCompare(av);return sd==='a'?av-bv:bv-av;});}
+
+// ════════════════════════════════════════════════════
+// STATS & BOXES
+// ════════════════════════════════════════════════════
+const av=(arr,k)=>{const vs=arr.map(r=>r[k]).filter(v=>v!=null);return vs.length?vs.reduce((s,v)=>s+v,0)/vs.length:null;};
+const f4=v=>v==null||isNaN(v)?'—':Number(v).toFixed(4);
+const f2=v=>v==null||isNaN(v)?'—':Number(v).toFixed(2);
+const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v??'—';};
+function upStats(){
+  const rs=FLT,wt=rs.filter(r=>r.PERS_teste!=null);
+  const best=[...wt].sort((a,b)=>b.PERS_teste-a.PERS_teste)[0];
+  const avgT=av(wt,'PERS_teste');const g70=wt.filter(r=>r.PERS_teste>=0.7).length;
+  const wq=rs.filter(r=>r.score_equilibrio!=null);
+  const bestQ=[...wq].sort((a,b)=>b.score_equilibrio-a.score_equilibrio)[0];
+  const cv=rs.filter(r=>r.tipo==='CONV'),alt=rs.filter(r=>r.tipo==='ALT');
+  const hyd=RAW.filter(r=>PRED_IDX.has(r.modelo)).length;
+  set('s0',rs.length);set('s0b',`${cv.length} CONV · ${alt.length} ALT`);
+  set('s1',f4(best?.PERS_teste));set('s1b',best?`${best.combo_id} (${best.tipo})`:'—');
+  set('s2',f4(avgT));set('s2b',`CONV: ${f4(av(cv.filter(r=>r.PERS_teste!=null),'PERS_teste'))} · ALT: ${f4(av(alt.filter(r=>r.PERS_teste!=null),'PERS_teste'))}`);
+  set('s3',g70);set('s3b',`${((g70/(wt.length||1))*100).toFixed(0)}%`);
+  set('s4',f4(bestQ?.score_equilibrio));set('s4b',bestQ?`${bestQ.combo_id} (${bestQ.tipo})`:'—');
+  set('s-hyd',hyd);
+}
+function upBoxes(){
+  const cv=FLT.filter(r=>r.tipo==='CONV'),alt=FLT.filter(r=>r.tipo==='ALT');
+  [['cb',cv],['ab',alt]].forEach(([p,rs])=>{
+    set(p+'-tr',f4(av(rs.filter(r=>r.PERS_treino!=null),'PERS_treino')));
+    set(p+'-vl',f4(av(rs.filter(r=>r.PERS_validacao!=null),'PERS_validacao')));
+    set(p+'-te',f4(av(rs.filter(r=>r.PERS_teste!=null),'PERS_teste')));
+    set(p+'-sp',f4(av(rs.filter(r=>r.spread_pers!=null),'spread_pers')));
+    set(p+'-mae',f2(av(rs.filter(r=>r.MAE_teste!=null),'MAE_teste'))+' cm');
+  });
+}
+
+// ════════════════════════════════════════════════════
+// MAIN CHARTS
+// ════════════════════════════════════════════════════
+function dc(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+function upCharts(){cRank();cFases();cSc();cSpread();cEq();cMae();}
+function cRank(){
+  dc('rank');const rs=[...FLT].filter(r=>r.PERS_teste!=null).sort((a,b)=>b.PERS_teste-a.PERS_teste).slice(0,50);
+  CH.rank=new Chart(document.getElementById('c-rank'),{type:'bar',data:{labels:rs.map(r=>r.combo_id||r.modelo.slice(-16)),datasets:[{label:'PERS Teste',data:rs.map(r=>r.PERS_teste),backgroundColor:rs.map(r=>r.tipo==='CONV'?'rgba(16,185,129,.65)':'rgba(59,130,246,.65)'),borderColor:rs.map(r=>r.tipo==='CONV'?'#10b981':'#3b82f6'),borderWidth:1.5,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const r=rs[ctx.dataIndex];return ` ${r.tipo} | Teste:${f4(r.PERS_teste)} Val:${f4(r.PERS_validacao)}`}}}},scales:{y:{grid:{color:'#334155'}},x:{ticks:{maxRotation:60,font:{size:8}},grid:{display:false}}}}});
+}
+function cFases(){
+  dc('fases');const tipos=[...new Set(FLT.map(r=>r.tipo))].sort();const fases=['PERS_treino','PERS_validacao','PERS_teste'];
+  CH.fases=new Chart(document.getElementById('c-fases'),{type:'bar',data:{labels:['PERS Treino','PERS Val','PERS Teste'],datasets:tipos.map(t=>({label:t,data:fases.map(f=>av(FLT.filter(r=>r.tipo===t&&r[f]!=null),f)),backgroundColor:t==='CONV'?'rgba(16,185,129,.65)':'rgba(59,130,246,.65)',borderColor:t==='CONV'?'#10b981':'#3b82f6',borderWidth:1.5,borderRadius:3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.dataset.label}: ${f4(ctx.raw)}`}}},scales:{y:{grid:{color:'#334155'}},x:{grid:{display:false}}}}});
+}
+function cSc(){
+  dc('sc');const tipos=[...new Set(FLT.map(r=>r.tipo))].sort();
+  CH.sc=new Chart(document.getElementById('c-sc'),{type:'scatter',data:{datasets:tipos.map(t=>({label:t,data:FLT.filter(r=>r.tipo===t&&r.PERS_validacao!=null&&r.PERS_teste!=null).map(r=>({x:r.PERS_validacao,y:r.PERS_teste,c:r.combo_id})),backgroundColor:t==='CONV'?'rgba(16,185,129,.55)':'rgba(59,130,246,.55)',borderColor:t==='CONV'?'#10b981':'#3b82f6',pointRadius:4,pointHoverRadius:7}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.c}: Val=${f4(ctx.raw.x)} Teste=${f4(ctx.raw.y)}`}}},scales:{x:{title:{display:true,text:'PERS Val',color:'#94a3b8'},grid:{color:'#334155'}},y:{title:{display:true,text:'PERS Teste',color:'#94a3b8'},grid:{color:'#334155'}}}}});
+}
+function cSpread(){
+  dc('spread');const tipos=[...new Set(FLT.map(r=>r.tipo))].sort();const bins=[0,.05,.1,.15,.2,.25,.3,.4,.5,1];
+  CH.spread=new Chart(document.getElementById('c-spread'),{type:'bar',data:{labels:bins.slice(0,-1).map((_,i)=>`${bins[i].toFixed(2)}-${bins[i+1].toFixed(2)}`),datasets:tipos.map(t=>({label:t,data:bins.slice(0,-1).map((_,i)=>FLT.filter(r=>r.tipo===t&&r.spread_pers!=null&&r.spread_pers>=bins[i]&&r.spread_pers<bins[i+1]).length),backgroundColor:t==='CONV'?'rgba(16,185,129,.65)':'rgba(59,130,246,.65)',borderColor:t==='CONV'?'#10b981':'#3b82f6',borderWidth:1.5,borderRadius:3}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10}}},scales:{y:{grid:{color:'#334155'}},x:{ticks:{maxRotation:40,font:{size:8}},grid:{display:false}}}}});
+}
+function cEq(){
+  dc('eq');const tipos=[...new Set(FLT.map(r=>r.tipo))].sort();
+  CH.eq=new Chart(document.getElementById('c-eq'),{type:'scatter',data:{datasets:tipos.map(t=>({label:t,data:FLT.filter(r=>r.tipo===t&&r.score_equilibrio!=null&&r.PERS_teste!=null).map(r=>({x:r.score_equilibrio,y:r.PERS_teste,c:r.combo_id})),backgroundColor:t==='CONV'?'rgba(16,185,129,.55)':'rgba(59,130,246,.55)',borderColor:t==='CONV'?'#10b981':'#3b82f6',pointRadius:4,pointHoverRadius:7}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.c}: Eq=${f4(ctx.raw.x)} Teste=${f4(ctx.raw.y)}`}}},scales:{x:{title:{display:true,text:'Score Equilíbrio',color:'#94a3b8'},grid:{color:'#334155'}},y:{title:{display:true,text:'PERS Teste',color:'#94a3b8'},grid:{color:'#334155'}}}}});
+}
+function cMae(){
+  dc('mae');const tipos=[...new Set(FLT.map(r=>r.tipo))].sort();
+  CH.mae=new Chart(document.getElementById('c-mae'),{type:'scatter',data:{datasets:tipos.map(t=>({label:t,data:FLT.filter(r=>r.tipo===t&&r.MAE_teste!=null&&r.PERS_teste!=null).map(r=>({x:r.MAE_teste,y:r.PERS_teste,c:r.combo_id})),backgroundColor:t==='CONV'?'rgba(16,185,129,.55)':'rgba(59,130,246,.55)',borderColor:t==='CONV'?'#10b981':'#3b82f6',pointRadius:4,pointHoverRadius:7}))},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.raw.c}: MAE=${f2(ctx.raw.x)} Teste=${f4(ctx.raw.y)}`}}},scales:{x:{title:{display:true,text:'MAE Teste (cm)',color:'#94a3b8'},grid:{color:'#334155'}},y:{title:{display:true,text:'PERS Teste',color:'#94a3b8'},grid:{color:'#334155'}}}}});
+}
+
+// ════════════════════════════════════════════════════
+// TABLE
+// ════════════════════════════════════════════════════
+function pc(v,big=false){if(v==null||isNaN(v))return '<span style="color:var(--mu)">—</span>';const cls=v>=0.8?'g':v>=0.6?'m':'b';const pct=Math.max(0,Math.min(100,v*100));const bc=v>=0.8?'#22c55e':v>=0.6?'#f59e0b':'#ef4444';return `<span class="fw ${cls}" style="${big?'font-size:.83rem':''}">${f4(v)}<span class="bw"><span class="bf" style="width:${pct}%;background:${bc}"></span></span></span>`;}
+function rt(){
+  const start=pg*ps,page=FLT.slice(start,start+ps);
+  const bestT=Math.max(...FLT.map(r=>r.PERS_teste??-Infinity));
+  document.getElementById('tbody').innerHTML=page.map((r,i)=>{
+    const rank=start+i+1,isB=r.PERS_teste===bestT,hasP=PRED_IDX.has(r.modelo);
+    return `<tr class="${r.tipo==='CONV'?'cv':''}" onclick="showDetail('${encodeURIComponent(r.modelo)}',this)">
+      <td class="mu2">${rank}</td><td><span class="tag tag-${r.tipo.toLowerCase()}">${r.tipo}</span></td>
+      <td class="fw" title="${r.modelo}">${r.combo_id||r.modelo.slice(-16)}${isB?'<span class="bst">TOP</span>':''}${hasP?'<span class="dot-f" title="hidrograma disponível"></span>':''}</td>
+      <td>${pc(r.PERS_treino)}</td><td>${pc(r.PERS_validacao)}</td><td>${pc(r.PERS_teste,true)}</td>
+      <td>${r.media_pers!=null?f4(r.media_pers):'—'}</td>
+      <td>${r.spread_pers!=null?`<span class="${r.spread_pers<0.1?'g':r.spread_pers<0.2?'m':'b'}">${f4(r.spread_pers)}</span>`:'—'}</td>
+      <td>${r.score_equilibrio!=null?`<span class="${r.score_equilibrio>0.35?'g':r.score_equilibrio>0.2?'m':'b'}">${f4(r.score_equilibrio)}</span>`:'—'}</td>
+      <td>${r.MAE_val!=null?f2(r.MAE_val):'—'}</td><td>${r.MAE_teste!=null?f2(r.MAE_teste):'—'}</td>
+      <td>${r.E95_teste!=null?r.E95_teste.toFixed(1):'—'}</td>
+      <td class="mu2">${r.neuronios}</td><td class="mu2">${r.n_inputs}</td>
+      <td>${hasP?'🌊':'<span style="color:var(--br)">·</span>'}</td>
+    </tr>`;
+  }).join('');
+  const total=Math.ceil(FLT.length/ps);
+  document.getElementById('tbl-cnt').textContent=`${FLT.length} modelos · ${start+1}–${Math.min(start+ps,FLT.length)}`;
+  document.getElementById('pi').textContent=`${pg+1}/${total||1}`;
+  document.getElementById('pb').disabled=pg===0;
+  document.getElementById('nb').disabled=pg>=total-1;
+}
+function cp(d){const t=Math.ceil(FLT.length/ps);pg=Math.max(0,Math.min(pg+d,t-1));rt();}
+
+// ════════════════════════════════════════════════════
+
+// ════════════════════════════════════════════════════
+// FETCH PREVISÕES DO GITHUB (sob demanda)
+// ════════════════════════════════════════════════════
+const FETCH_ERR={};
+async function fetchPreds(mn){
+  if(PRED_IDX.has(mn))return PRED_IDX.get(mn);
+  const c=ghCfg();
+  const enc=encodeURIComponent(mn);
+  const url=`${c.base}/modelos/${enc}/${enc}_previsoes.csv`;
+  try{
+    const resp=await fetch(url);
+    if(!resp.ok){FETCH_ERR[mn]={url,status:resp.status,msg:`HTTP ${resp.status}`};return null;}
+    const text=await resp.text();
+    const vals=text.trim().split(String.fromCharCode(10)).map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v));
+    if(!vals.length){FETCH_ERR[mn]={url,status:200,msg:`CSV vazio ou sem números (${text.length} bytes)`};return null;}
+    PRED_IDX.set(mn,vals);
+    const shyd=document.getElementById('s-hyd');if(shyd)shyd.textContent=PRED_IDX.size;
+    return vals;
+  }catch(e){FETCH_ERR[mn]={url,status:'ERR',msg:String(e)};return null;}
+}
+
+// ════════════════════════════════════════════════════
+// DETAIL PANEL
+// ════════════════════════════════════════════════════
+async function showDetail(enc,trEl){
+  const mn=decodeURIComponent(enc);
+  const r=RAW.find(x=>x.modelo===mn);if(!r)return;
+  document.querySelectorAll('#tbody tr').forEach(t=>t.classList.remove('sel'));
+  trEl.classList.add('sel');selRow=r;selModelName=mn;
+  const dp=document.getElementById('dp');dp.classList.add('open');
+  document.getElementById('dp-backdrop').classList.add('open');
+  document.getElementById('dp-title').textContent=r.combo_id||r.modelo;
+  document.getElementById('dp-sub').textContent=`${r.tipo} · ${r.fonte_rodada}`;
+
+  const c=ghCfg();
+  const enc2=encodeURIComponent(mn);
+  const matUrl=`${c.base}/modelos/${enc2}/${enc2}.mat`;
+  const csvUrl=`${c.base}/modelos/${enc2}/${enc2}_previsoes.csv`;
+
+  const pg2=(k)=>{const v=r[k];const col=v==null?'#94a3b8':v>=0.8?'#22c55e':v>=0.6?'#f59e0b':'#ef4444';const pct=v!=null?Math.max(0,Math.min(100,v*100)):0;return `<div class="pc"><div class="pl">${k.replace('PERS_','PERS ')}</div><div class="pv" style="color:${col}">${v!=null?v.toFixed(4):'—'}</div><div class="pb" style="background:${col};width:${pct}%"></div></div>`;}
+  const dprow=(k,v,cls='')=>`<div class="dp-row"><span class="k">${k}</span><span class="v ${cls}">${v}</span></div>`;
+  const ghBtn=(lbl,icon,url,fn)=>`<a class="fbtn" href="${url}" target="_blank" download="${fn}"><span class="fi">${icon}</span><div class="fd"><div class="fn">${lbl}</div><div class="fs">${fn}</div></div><span class="fa">↓ GitHub</span></a>`;
+
+  document.getElementById('dp-body').innerHTML=`
+    <div class="dp-sec" id="dp-hydro-sec">
+      <h4>🌊 Hidrogramas</h4>
+      <div class="preds-loading"><div class="spin-sm"></div>&nbsp;Buscando previsões do GitHub…</div>
+    </div>
+    <div class="dp-sec"><h4>PERS</h4>
+      <div class="pg4">${pg2('PERS_treino')}${pg2('PERS_validacao')}${pg2('PERS_teste')}${pg2('PERS_geral')}</div>
+      ${dprow('Média PERS',f4(r.media_pers))}${dprow('Spread',f4(r.spread_pers),r.spread_pers!=null&&r.spread_pers<0.1?'g':r.spread_pers!=null&&r.spread_pers>0.2?'b':'')}
+      ${dprow('Score Equilíbrio',f4(r.score_equilibrio),r.score_equilibrio!=null&&r.score_equilibrio>=0.9?'g':'')}
+    </div>
+    <div class="dp-sec"><h4>MAE &amp; E95 (cm)</h4>
+      ${dprow('MAE Val',f2(r.MAE_val)+' cm')}${dprow('MAE Teste',f2(r.MAE_teste)+' cm')}
+      ${dprow('E95 Val',r.E95_val!=null?r.E95_val.toFixed(1)+' cm':'—')}${dprow('E95 Teste',r.E95_teste!=null?r.E95_teste.toFixed(1)+' cm':'—')}
+    </div>
+    <div class="dp-sec"><h4>CE</h4>
+      ${dprow('CE Treino',f4(r.CE_treino))}${dprow('CE Val',f4(r.CE_val))}${dprow('CE Teste',f4(r.CE_teste))}${dprow('CE Geral',f4(r.CE_geral))}
+    </div>
+    <div class="dp-sec"><h4>Arquivos</h4>
+      ${ghBtn('MATLAB (.mat)','🧠',matUrl,mn+'.mat')}
+      ${ghBtn('Previsões CSV','📈',csvUrl,mn+'_previsoes.csv')}
+    </div>
+    <div class="dp-sec"><h4>Configuração</h4>
+      ${dprow('Tipo',r.tipo)}${dprow('Neurônios',r.neuronios)}${dprow('Inputs',r.n_inputs)}
+      ${dprow('N Treino',r.N_treino)}${dprow('N Val',r.N_validacao)}${dprow('N Teste',r.N_teste)}
+      ${dprow('Status',r.status||'—')}${dprow('Rotação',r.rotacao||'—')}
+    </div>`;
+
+  // Async: fetch predictions and render hydro
+  const preds=await fetchPreds(mn);
+  const obs=r.obs_key?OBS[r.obs_key]:null;
+  let parts=null;
+  if(preds&&obs&&r.N_treino){
+    const nt=r.N_treino,nv=r.N_validacao,nts=r.N_teste;
+    parts={
+      treino:{obs:obs.slice(0,nt),pred:preds.slice(0,nt)},
+      val:{obs:obs.slice(nt,nt+nv),pred:preds.slice(nt,nt+nv)},
+      teste:{obs:obs.slice(nt+nv,nt+nv+nts),pred:preds.slice(nt+nv,nt+nv+nts)},
+    };
+    for(const[key,p] of Object.entries(parts)){
+      const evMap=new Map();
+      p.obs.forEach(([dt,ev,obsv],i)=>{
+        if(!evMap.has(ev))evMap.set(ev,[]);
+        evMap.get(ev).push({dt,obs:obsv,pred:p.pred[i],i});
+      });
+      p.events=evMap;
+    }
+  }
+  const hydroSec=document.getElementById('dp-hydro-sec');
+  if(hydroSec)hydroSec.outerHTML=buildHydroHtml(r,parts,preds);
+  if(parts)initHydroCharts(parts,r.tipo);
+}
+
+// ════════════════════════════════════════════════════
+// HYDROGRAPH HTML + CHARTS — navegação por evento
+// ════════════════════════════════════════════════════
+function buildHydroHtml(r, parts, preds){
+  if(!preds){
+    const e=FETCH_ERR[r.modelo]||{};
+    return `<div class="dp-sec"><h4>🌊 Hidrogramas</h4>
+      <div class="upload-hint">⚠ Falha ao carregar previsões.<br>
+      <b>Status:</b> ${e.status||'?'} — ${e.msg||'sem detalhes'}<br>
+      <b>URL:</b> <code style="word-break:break-all;font-size:.7rem">${e.url||'(não disponível)'}</code></div></div>`;
+  }
+  if(!parts){
+    return `<div class="dp-sec"><h4>🌊 Hidrogramas</h4><div class="no-data">Dados de partição não disponíveis.</div></div>`;
+  }
+
+  // Gerar botões para cada evento, agrupados por fase
+  const phMeta=[
+    {key:'treino',label:'TR',color:'#f59e0b'},
+    {key:'val',   label:'VL',color:'#3b82f6'},
+    {key:'teste', label:'TE',color:'#10b981'},
+  ];
+  let first=true;
+  const btns=phMeta.map(ph=>{
+    const evs=[...parts[ph.key].events.keys()].sort((a,b)=>a-b);
+    return evs.map(ev=>{
+      const btn=`<button class="ev-btn${first?' active':''}" id="evbtn-${ev}" onclick="selectEvent(${ev})">Ev ${ev} <span class="phase-badge" style="background:${ph.color}">${ph.label}</span></button>`;
+      first=false;
+      return btn;
+    }).join('');
+  }).join('');
+
+  return `<div class="dp-sec"><h4>🌊 Hidrogramas — por Evento</h4>
+    <div class="ev-list">${btns}</div>
+    <div id="ev-info" style="font-size:.7rem;color:var(--mu);margin:4px 0 6px"></div>
+    <div class="hcw-big"><canvas id="hc-ev"></canvas></div>
+    <div class="ev-stats">
+      <div class="ev-stat"><div class="el">Pontos</div><div class="ev" id="es-n">—</div></div>
+      <div class="ev-stat"><div class="el">RMSE (cm)</div><div class="ev" id="es-rmse">—</div></div>
+      <div class="ev-stat"><div class="el">Pico obs (cm)</div><div class="ev" id="es-pk-obs">—</div></div>
+      <div class="ev-stat"><div class="el">Pico prev (cm)</div><div class="ev" id="es-pk-pred">—</div></div>
+    </div>
+  </div>`;
+}
+
+let _curParts=null, _curTipo=null, _evMeta=null;
+
+function initHydroCharts(parts, tipo){
+  _curParts=parts; _curTipo=tipo;
+  // Montar mapa global de eventos: ev → {phaseLabel, phColor, data[]}
+  _evMeta=new Map();
+  const phMeta=[
+    {key:'treino',label:'Treino',   color:'#f59e0b'},
+    {key:'val',   label:'Validação',color:'#3b82f6'},
+    {key:'teste', label:'Teste',    color:'#10b981'},
+  ];
+  phMeta.forEach(ph=>{
+    [...parts[ph.key].events.keys()].sort((a,b)=>a-b).forEach(ev=>{
+      _evMeta.set(ev,{label:ph.label,phColor:ph.color,data:parts[ph.key].events.get(ev)});
+    });
+  });
+  // Renderiza primeiro evento
+  const firstEv=[..._evMeta.keys()][0];
+  if(firstEv!=null) selectEvent(firstEv);
+}
+
+function selectEvent(evNum){
+  if(!_evMeta) return;
+  const meta=_evMeta.get(evNum);
+  if(!meta) return;
+
+  // Atualizar botões
+  document.querySelectorAll('.ev-btn').forEach(b=>b.classList.remove('active'));
+  const btn=document.getElementById('evbtn-'+evNum);
+  if(btn){btn.classList.add('active');btn.scrollIntoView({block:'nearest',inline:'nearest'});}
+
+  const pts=meta.data.filter(x=>x.obs!=null);
+
+  // Info label
+  const infoEl=document.getElementById('ev-info');
+  if(infoEl) infoEl.textContent=`Evento ${evNum} — ${meta.label} · ${pts.length} pontos`;
+
+  // Stats
+  if(pts.length){
+    const rmse=Math.sqrt(pts.reduce((s,x)=>s+(x.obs-x.pred)**2,0)/pts.length);
+    const pkObs=Math.max(...pts.map(x=>x.obs));
+    const pkPred=Math.max(...pts.map(x=>x.pred));
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    set('es-n',pts.length);
+    set('es-rmse',rmse.toFixed(1));
+    set('es-pk-obs',pkObs.toFixed(1));
+    set('es-pk-pred',pkPred.toFixed(1));
+  }
+
+  // Chart
+  const canvas=document.getElementById('hc-ev');if(!canvas)return;
+  if(CH['hc-ev']){CH['hc-ev'].destroy();delete CH['hc-ev'];}
+  const color=_curTipo==='CONV'?'#10b981':'#3b82f6';
+  const labels=pts.map(x=>x.dt?x.dt.slice(5,16):'');
+
+  CH['hc-ev']=new Chart(canvas,{
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        {label:'Observado',data:pts.map(x=>x.obs),borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.08)',borderWidth:1.8,pointRadius:0,tension:.2,fill:false},
+        {label:'Previsto RNA',data:pts.map(x=>x.pred),borderColor:'#ef4444',backgroundColor:'rgba(0,0,0,0)',borderWidth:1.8,pointRadius:0,tension:.2,borderDash:[6,3],fill:false},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      animation:{duration:0},
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{labels:{boxWidth:10,font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>{const d=pts[ctx.dataIndex];return ctx.datasetIndex===0?` Obs: ${d.obs?.toFixed(1)} cm`:`Prev: ${d.pred?.toFixed(1)} cm | Erro: ${(d.pred-d.obs)?.toFixed(1)} cm`;}}}
+      },
+      scales:{
+        x:{ticks:{maxRotation:0,maxTicksLimit:8,font:{size:8}},grid:{color:'#334155'}},
+        y:{title:{display:true,text:'Nível (cm)',color:'#94a3b8',font:{size:9}},grid:{color:'#334155'}}
+      }
+    }
+  });
+}
+
+function closePanel(){
+  document.getElementById('dp').classList.remove('open');
+  document.getElementById('dp-backdrop').classList.remove('open');
+  document.querySelectorAll('#tbody tr').forEach(t=>t.classList.remove('sel'));
+  selRow=null;_curParts=null;_evMeta=null;selModelName=null;
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
+</script>
+</body>
+</html>
