@@ -6,6 +6,8 @@
 <title>Dashboard 4h — RNAs Santa Tereza</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
   /* ALT = verde da marca | CONV = azul-ciano (diferenciação) */
@@ -182,19 +184,40 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 /* Detail panel loading */
 .preds-loading{color:var(--mu);font-size:.75rem;text-align:center;padding:20px;display:flex;align-items:center;justify-content:center;gap:8px}
 .spin-sm{width:16px;height:16px;border:2px solid var(--s2);border-top-color:var(--alt);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+
+/* ═══ SEÇÃO A BACIA ═══ */
+#sec-bacia{background:#f5f2ec;color:#1a1a1a;padding:36px 28px 28px}
+.bacia-pill{display:inline-block;background:rgba(74,140,58,.15);color:#3d7a2e;border:1px solid rgba(74,140,58,.35);border-radius:999px;font-size:.68rem;font-weight:700;letter-spacing:.1em;padding:3px 12px;margin-bottom:14px}
+#sec-bacia h2{font-size:1.45rem;font-weight:700;color:#111;margin-bottom:8px}
+#sec-bacia .bacia-sub{font-size:.82rem;color:#555;max-width:680px;line-height:1.55;margin-bottom:20px}
+.bacia-layout{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+#mapa-leaflet{height:400px;border-radius:10px;overflow:hidden;border:1px solid #ddd;z-index:0}
+.bacia-cards{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto}
+.bacia-card{background:#fff;border:1px solid #e0ddd6;border-radius:8px;padding:10px 13px;cursor:default;transition:.15s;display:flex;align-items:flex-start;gap:10px}
+.bacia-card:hover{border-color:#b0cba8;background:#f8fff6}
+.bacia-card-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.bacia-card-info{flex:1}
+.bacia-card-nome{font-size:.82rem;font-weight:700;color:#111;margin-bottom:1px}
+.bacia-card-desc{font-size:.71rem;color:#666;line-height:1.4}
+.bacia-card-transl{display:inline-block;margin-top:4px;font-size:.66rem;font-weight:600;background:rgba(74,140,58,.12);color:#3d7a2e;border-radius:4px;padding:1px 6px}
+.bacia-card-cod{font-size:.62rem;color:#999;margin-top:2px}
+.bacia-note{font-size:.68rem;color:#888;margin-top:14px;line-height:1.5;border-top:1px solid #ddd;padding-top:10px}
+.bacia-note a{color:#3d7a2e}
+@media(max-width:850px){.bacia-layout{grid-template-columns:1fr}#mapa-leaflet{height:300px}.bacia-cards{max-height:250px}}
 </style>
 </head>
 <body>
 
-<header>
-  <!-- Silhueta estilizada da Bacia Taquari-Antas -->
-  <svg class="brand-basin" viewBox="0 0 64 72" width="36" height="40" xmlns="http://www.w3.org/2000/svg">
+<header style="position:relative">
+  <!-- Logo Previne Taquari-Antas (PNG se disponível, SVG como fallback) -->
+  <img id="logo-img" src="logo_previne.png" alt="Previne Taquari-Antas" height="46"
+       style="flex-shrink:0;image-rendering:crisp-edges"
+       onerror="this.style.display='none';document.getElementById('logo-svg').style.display='block'">
+  <svg id="logo-svg" style="display:none;flex-shrink:0" viewBox="0 0 64 72" width="38" height="43">
     <defs>
       <linearGradient id="baciag" x1="0%" y1="100%" x2="100%" y2="0%">
-        <stop offset="0%"   stop-color="#4a8c3a"/>
-        <stop offset="35%"  stop-color="#c8be3a"/>
-        <stop offset="65%"  stop-color="#d27828"/>
-        <stop offset="100%" stop-color="#c03830"/>
+        <stop offset="0%" stop-color="#4a8c3a"/><stop offset="35%" stop-color="#c8be3a"/>
+        <stop offset="65%" stop-color="#d27828"/><stop offset="100%" stop-color="#c03830"/>
       </linearGradient>
     </defs>
     <path d="M18,68 L6,54 L4,38 L10,24 L8,12 L18,4 L32,6 L46,10 L58,22 L60,38 L54,54 L44,64 L30,70 Z" fill="url(#baciag)"/>
@@ -236,6 +259,26 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
     </details>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════════════
+     SEÇÃO: A BACIA — mapa interativo das estações
+════════════════════════════════════════════════ -->
+<section id="sec-bacia">
+  <div><span class="bacia-pill">A BACIA</span></div>
+  <h2>Onde ficam as estações</h2>
+  <p class="bacia-sub">A estação-alvo em Santa Tereza, a estação de montante e as estações de apoio usadas nas rodadas de modelagem. O tempo de translação estimado indica quando uma alteração no nível de cada estação chega a Santa Tereza.</p>
+  <div class="bacia-layout">
+    <div id="mapa-leaflet"></div>
+    <div class="bacia-cards" id="bacia-cards-list"></div>
+  </div>
+  <div class="bacia-note">
+    Marcadores sólidos: posição confirmada no registro da ANA/SGB.
+    Dados de nível: estações fluviométricas da rede ANA/SGB —
+    séries históricas no <a href="https://www.snirh.gov.br/hidroweb/" target="_blank">HidroWeb</a> ·
+    telemetria em tempo real no <a href="https://telemetriaws1.ana.gov.br/" target="_blank">Sistema Telemetria ANA</a>.
+    ⚠ Tempos de translação são estimativas; valores exatos dependem da magnitude do evento.
+  </div>
+</section>
 
 <div class="layout">
 <main id="main-area">
@@ -857,6 +900,100 @@ function closePanel(){
   selRow=null;_curParts=null;_evMeta=null;selModelName=null;
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
+</script>
+
+<!-- ═══════════════════════════════════════════════
+     MAPA INTERATIVO — Leaflet + estações ANA
+════════════════════════════════════════════════ -->
+<script>
+(function initMapaBacia(){
+  // ── Dados das estações ─────────────────────────────────────────────
+  // Coordenadas: registro ANA/SGB (verificar em snirh.gov.br/hidroweb)
+  // Translação: estimativa média; varia conforme magnitude do evento
+  const ESTACOES = [
+    {
+      cod:'86472600', nome:'Santa Tereza', rio:'Rio Taquari',
+      desc:'Estação-alvo — onde o nível é previsto pelas RNAs',
+      tipo:'alvo', lat:-28.8584, lon:-51.7317, transl:null
+    },
+    {
+      cod:'86472000', nome:'Linha José Júlio', rio:'Rio das Antas',
+      desc:'Estação de montante — telemetria de alta frequência (ALT)',
+      tipo:'montante', lat:-28.7167, lon:-51.5386, transl:'~4–6 h'
+    },
+    {
+      cod:'86448000', nome:'Veranópolis', rio:'Rio das Antas',
+      desc:'Estação de apoio — bacia das Antas',
+      tipo:'apoio', lat:-28.9295, lon:-51.5578, transl:'~8–12 h'
+    },
+    {
+      cod:'86507000', nome:'Carreiro', rio:'Rio Carreiro',
+      desc:'Estação de apoio — afluente pelo rio Carreiro',
+      tipo:'apoio', lat:-28.8833, lon:-52.0083, transl:'~12–18 h'
+    },
+    {
+      cod:'86125130', nome:'Ituim', rio:'Rio Ituim',
+      desc:'Estação de apoio — afluente pelo rio Ituim',
+      tipo:'apoio', lat:-29.0533, lon:-51.5306, transl:'~10–14 h'
+    },
+    {
+      cod:'86125500', nome:'Prata Caxias', rio:'Rio Pelotas',
+      desc:'Estação de apoio — planalto, rio da Prata',
+      tipo:'apoio', lat:-29.1694, lon:-51.2611, transl:'~18–24 h'
+    },
+  ];
+
+  // ── Cores por tipo ─────────────────────────────────────────────────
+  const COR = { alvo:'#f59e0b', montante:'#3b82f6', apoio:'#4a8c3a' };
+
+  function svgDot(cor, r=7){
+    return L.divIcon({
+      className:'',
+      html:`<svg width="${r*2+2}" height="${r*2+2}"><circle cx="${r+1}" cy="${r+1}" r="${r}" fill="${cor}" stroke="#fff" stroke-width="2"/></svg>`,
+      iconSize:[r*2+2, r*2+2], iconAnchor:[r+1, r+1]
+    });
+  }
+
+  // ── Inicializar mapa ───────────────────────────────────────────────
+  const map = L.map('mapa-leaflet', {
+    center: [-28.95, -51.65], zoom: 9,
+    zoomControl: true, scrollWheelZoom: false
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 18
+  }).addTo(map);
+
+  // ── Marcadores e cards ────────────────────────────────────────────
+  const cardList = document.getElementById('bacia-cards-list');
+  ESTACOES.forEach(est => {
+    const cor = COR[est.tipo] || '#888';
+    const marker = L.marker([est.lat, est.lon], {icon: svgDot(cor)}).addTo(map);
+    marker.bindPopup(
+      `<strong>${est.nome}</strong><br>` +
+      `<span style="color:#555;font-size:.8em">${est.rio} · cód. ${est.cod}</span><br>` +
+      `<span style="font-size:.8em">${est.desc}</span>` +
+      (est.transl ? `<br><span style="color:#3d7a2e;font-weight:600;font-size:.8em">⏱ Translação: ${est.transl}</span>` : '')
+    );
+
+    // Card na lista lateral
+    const card = document.createElement('div');
+    card.className = 'bacia-card';
+    card.innerHTML =
+      `<div class="bacia-card-dot" style="background:${cor}"></div>` +
+      `<div class="bacia-card-info">` +
+        `<div class="bacia-card-nome">${est.nome}</div>` +
+        `<div class="bacia-card-desc">${est.desc}</div>` +
+        (est.transl ? `<span class="bacia-card-transl">⏱ ${est.transl} até Santa Tereza</span>` : '') +
+        `<div class="bacia-card-cod">${est.rio} · cód. ${est.cod}</div>` +
+      `</div>`;
+    card.addEventListener('mouseenter', () => marker.openPopup());
+    card.addEventListener('mouseleave', () => marker.closePopup());
+    card.addEventListener('click', () => { map.setView([est.lat, est.lon], 11); marker.openPopup(); });
+    cardList.appendChild(card);
+  });
+})();
 </script>
 </body>
 </html>
