@@ -572,7 +572,8 @@ async function init(){
     showLoading(false);
     // AUTO-TESTE: verifica se fetch de CSV funciona (diagnóstico)
     try{
-      const testMn=(RAW.find(x=>x.obs_key==='R5_R7')||{}).modelo;
+      const testR=(RAW.find(x=>x.obs_key==='R5_R7'&&x.tem_previsao))||null;
+      const testMn=testR&&(testR.mat_nome||testR.modelo);
       if(testMn){
         const enc2=encodeURIComponent(testMn);
         const testUrl=`${c.base}/modelos/${enc2}/${enc2}_previsoes.csv`;
@@ -756,10 +757,11 @@ function cp(d){const t=Math.ceil(FLT.length/ps);pg=Math.max(0,Math.min(pg+d,t-1)
 // FETCH PREVISÕES DO GITHUB (sob demanda)
 // ════════════════════════════════════════════════════
 const FETCH_ERR={};
-async function fetchPreds(mn){
+async function fetchPreds(mn,matNome){
   if(PRED_IDX.has(mn))return PRED_IDX.get(mn);
   const c=ghCfg();
-  const enc=encodeURIComponent(mn);
+  const fileId=matNome||mn;
+  const enc=encodeURIComponent(fileId);
   const url=`${c.base}/modelos/${enc}/${enc}_previsoes.csv`;
   try{
     const resp=await fetch(url);
@@ -904,11 +906,12 @@ async function showDetail(enc,trEl){
 
 async function _renderDetailPanel(r){
   const mn=r.modelo;
+  const fileId=r.mat_nome||mn;
   document.getElementById('dp-title').textContent=r.combo_id||r.modelo;
   document.getElementById('dp-sub').textContent=`${r.tipo} · ${r.fonte_rodada}`;
 
   const c=ghCfg();
-  const enc2=encodeURIComponent(mn);
+  const enc2=encodeURIComponent(fileId);
   const matUrl=`${c.base}/modelos/${enc2}/${enc2}.mat`;
   const csvUrl=`${c.base}/modelos/${enc2}/${enc2}_previsoes.csv`;
 
@@ -991,7 +994,7 @@ async function _renderDetailPanel(r){
     </div>`;
 
   // Buscar previsões e montar hidrogramas + scatter
-  const preds=await fetchPreds(mn);
+  const preds=await fetchPreds(mn,r.mat_nome);
   const obs=r.obs_key?OBS[r.obs_key]:null;
   let parts=null;
   if(preds&&obs&&r.N_treino){
