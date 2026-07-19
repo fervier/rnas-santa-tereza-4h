@@ -770,7 +770,6 @@ async function fetchPreds(mn,matNome){
     const vals=text.trim().split(String.fromCharCode(10)).map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v));
     if(!vals.length){FETCH_ERR[mn]={url,status:200,msg:`CSV vazio ou sem números (${text.length} bytes)`};return null;}
     PRED_IDX.set(mn,vals);
-    const shyd=document.getElementById('s-hyd');if(shyd)shyd.textContent=PRED_IDX.size;
     return vals;
   }catch(e){FETCH_ERR[mn]={url,status:'ERR',msg:String(e)};return null;}
 }
