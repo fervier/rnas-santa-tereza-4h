@@ -6,34 +6,24 @@
 <title>Dashboard 4h — RNAs Santa Tereza</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
-  /* ALT = azul | CONV = verde */
-  --alt:#3b82f6;--altA:rgba(59,130,246,.48);
-  --conv:#10b981;--convA:rgba(16,185,129,.48);
-  --obs:#fbbf24;--obsA:rgba(251,191,36,.8);
+  --alt:#3b82f6;--altA:rgba(59,130,246,.55);
+  --conv:#10b981;--convA:rgba(16,185,129,.55);
+  --obs:#f59e0b;--obsA:rgba(245,158,11,.8);
   --pred-c:#10b981;--pred-a:#3b82f6;
-  /* Paleta de fundo verde-escura (combina com o verde da bacia) */
-  --bg:#0b1710;--s1:#0f2014;--s2:#172c1c;--s3:#1f3c26;
-  --tx:#f0fdf4;--mu:#7ea882;--br:#1e3422;
-  --good:#4ade80;--mid:#fbbf24;--bad:#f87171;
-  /* Degradê da marca: verde → amarelo → laranja → vermelho */
-  --brand-green:#4a8c3a;--brand-yellow:#c8be3a;
-  --brand-orange:#d27828;--brand-red:#c03830;
+  --bg:#0f172a;--s1:#1e293b;--s2:#334155;--s3:#475569;
+  --tx:#f1f5f9;--mu:#94a3b8;--br:#334155;
+  --good:#22c55e;--mid:#f59e0b;--bad:#ef4444;
   --pw:min(860px,92vw);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',system-ui,sans-serif}
 
 /* Header */
-header{background:var(--s1);border-bottom:none;padding:12px 22px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand-green) 0%,var(--brand-yellow) 40%,var(--brand-orange) 70%,var(--brand-red) 100%)}
-header h1{font-size:.95rem;font-weight:600;color:var(--tx)}
-header p{color:var(--mu);font-size:.72rem}
-.brand-name{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:linear-gradient(90deg,var(--brand-green),var(--brand-yellow),var(--brand-orange),var(--brand-red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2px}
-.brand-basin{flex-shrink:0}
+header{background:var(--s1);border-bottom:1px solid var(--br);padding:12px 22px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+header h1{font-size:1.05rem;font-weight:600}
+header p{color:var(--mu);font-size:.76rem}
 .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.67rem;font-weight:700}
 .tag-alt{background:rgba(59,130,246,.18);color:var(--alt);border:1px solid rgba(59,130,246,.3)}
 .tag-conv{background:rgba(16,185,129,.18);color:var(--conv);border:1px solid rgba(16,185,129,.3)}
@@ -174,7 +164,7 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 #gh-bar details>summary{display:inline;list-style:none}
 #gh-bar details>summary::-webkit-details-marker{display:none}
 /* Loading overlay */
-#loading-overlay{position:fixed;inset:0;background:rgba(11,23,16,.88);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+#loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
 #loading-overlay.hidden{display:none}
 .spin{width:36px;height:36px;border:3px solid var(--s2);border-top-color:var(--alt);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -184,96 +174,14 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 /* Detail panel loading */
 .preds-loading{color:var(--mu);font-size:.75rem;text-align:center;padding:20px;display:flex;align-items:center;justify-content:center;gap:8px}
 .spin-sm{width:16px;height:16px;border:2px solid var(--s2);border-top-color:var(--alt);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-
-/* ─── VISTA FAMÍLIAS ─── */
-.view-seg{display:flex;gap:0;background:var(--s2);border-radius:7px;padding:2px;margin-right:8px;flex-shrink:0}
-.view-btn{background:none;border:none;color:var(--mu);padding:4px 12px;border-radius:5px;font-size:.73rem;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
-.view-btn.active{background:var(--s1);color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.4)}
-.mbar{display:flex;gap:3px;align-items:center;flex-wrap:wrap}
-.mtab{background:var(--s2);border:1px solid var(--br);color:var(--mu);padding:3px 10px;border-radius:5px;font-size:.71rem;cursor:pointer;transition:.15s;white-space:nowrap}
-.mtab.active{background:var(--alt);border-color:var(--alt);color:#0b1710}
-#fam-view{display:none;margin-bottom:14px}
-.fam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
-.fam-card{background:var(--s1);border:1px solid var(--br);border-radius:10px;overflow:hidden}
-.fam-card-hdr{padding:11px 14px;border-bottom:1px solid var(--br);display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
-.fam-card-hdr h4{font-size:.8rem;font-weight:700;margin:0;color:var(--tx)}
-.fam-subtitle{font-size:.64rem;color:var(--mu);margin-top:1px}
-.fam-cnt{font-size:.64rem;color:var(--mu);white-space:nowrap;flex-shrink:0}
-.fam-body{padding:8px 12px 10px}
-.fam-item{display:flex;align-items:center;gap:7px;padding:5px 4px;border-radius:5px;cursor:pointer;transition:.12s}
-.fam-item:hover{background:rgba(255,255,255,.05)}
-.fam-rank{width:14px;font-size:.63rem;color:var(--mu);text-align:right;flex-shrink:0}
-.fam-info{flex:1;min-width:0}
-.fam-name{font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fam-mae{font-size:.61rem;color:var(--mu)}
-.fam-right{flex-shrink:0;text-align:right}
-.fam-val{font-size:.82rem;font-weight:700}
-.fam-bar-wrap{height:3px;border-radius:2px;background:var(--s3);overflow:hidden;margin-top:3px;width:42px}
-.fam-bar-fill{height:100%;border-radius:2px}
-/* ─── DETAIL PANEL — tags ─── */
-.dp-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
-.dp-tag{border-radius:999px;padding:2px 10px;font-size:.65rem;font-weight:600}
-.dp-tag.t-tipo{background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.3)}
-.dp-tag.t-conv{background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.3)}
-.dp-tag.t-rot{background:rgba(192,132,252,.12);color:#c084fc;border:1px solid rgba(192,132,252,.3)}
-.dp-tag.t-info{background:var(--s2);color:var(--mu);border:1px solid var(--br)}
-/* ─── DETAIL PANEL — PERS barras horizontais ─── */
-.hbar-wrap{margin:4px 0 8px}
-.hbar-row{display:grid;grid-template-columns:68px 1fr 50px;align-items:center;gap:7px;margin-bottom:5px}
-.hbar-label{font-size:.69rem;color:var(--mu);text-align:right}
-.hbar-track{height:14px;background:var(--s2);border-radius:3px;overflow:hidden}
-.hbar-fill{height:100%;border-radius:3px;transition:width .4s}
-.hbar-val{font-size:.74rem;font-weight:700}
-/* ─── DETAIL PANEL — erro grid ─── */
-.err-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:6px 0 10px}
-.err-cell{background:var(--s2);border-radius:6px;padding:7px 9px;text-align:center}
-.err-cell .el{font-size:.6rem;color:var(--mu);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em}
-.err-cell .ev{font-size:.9rem;font-weight:700}
-/* ─── DETAIL PANEL — scatter ─── */
-.scatter-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-.scatter-cw{position:relative;height:170px}
-.scatter-lbl{font-size:.67rem;color:var(--mu);margin-bottom:3px}
-/* ═══ SEÇÃO A BACIA ═══ */
-#sec-bacia{background:#f5f2ec;color:#1a1a1a;padding:36px 28px 28px}
-.bacia-pill{display:inline-block;background:rgba(74,140,58,.15);color:#3d7a2e;border:1px solid rgba(74,140,58,.35);border-radius:999px;font-size:.68rem;font-weight:700;letter-spacing:.1em;padding:3px 12px;margin-bottom:14px}
-#sec-bacia h2{font-size:1.45rem;font-weight:700;color:#111;margin-bottom:8px}
-#sec-bacia .bacia-sub{font-size:.82rem;color:#555;max-width:680px;line-height:1.55;margin-bottom:20px}
-.bacia-layout{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
-#mapa-leaflet{height:400px;border-radius:10px;overflow:hidden;border:1px solid #ddd;z-index:0}
-.bacia-cards{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto}
-.bacia-card{background:#fff;border:1px solid #e0ddd6;border-radius:8px;padding:10px 13px;cursor:default;transition:.15s;display:flex;align-items:flex-start;gap:10px}
-.bacia-card:hover{border-color:#b0cba8;background:#f8fff6}
-.bacia-card-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px}
-.bacia-card-info{flex:1}
-.bacia-card-nome{font-size:.82rem;font-weight:700;color:#111;margin-bottom:1px}
-.bacia-card-desc{font-size:.71rem;color:#666;line-height:1.4}
-.bacia-card-transl{display:inline-block;margin-top:4px;font-size:.66rem;font-weight:600;background:rgba(74,140,58,.12);color:#3d7a2e;border-radius:4px;padding:1px 6px}
-.bacia-card-cod{font-size:.62rem;color:#999;margin-top:2px}
-.bacia-note{font-size:.68rem;color:#888;margin-top:14px;line-height:1.5;border-top:1px solid #ddd;padding-top:10px}
-.bacia-note a{color:#3d7a2e}
-@media(max-width:850px){.bacia-layout{grid-template-columns:1fr}#mapa-leaflet{height:300px}.bacia-cards{max-height:250px}}
 </style>
 </head>
 <body>
 
-<header style="position:relative">
-  <!-- Logo Previne Taquari-Antas (PNG se disponível, SVG como fallback) -->
-  <img id="logo-img" src="logo_previne.png" alt="Previne Taquari-Antas" height="46"
-       style="flex-shrink:0;image-rendering:crisp-edges"
-       onerror="this.style.display='none';document.getElementById('logo-svg').style.display='block'">
-  <svg id="logo-svg" style="display:none;flex-shrink:0" viewBox="0 0 64 72" width="38" height="43">
-    <defs>
-      <linearGradient id="baciag" x1="0%" y1="100%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#4a8c3a"/><stop offset="35%" stop-color="#c8be3a"/>
-        <stop offset="65%" stop-color="#d27828"/><stop offset="100%" stop-color="#c03830"/>
-      </linearGradient>
-    </defs>
-    <path d="M18,68 L6,54 L4,38 L10,24 L8,12 L18,4 L32,6 L46,10 L58,22 L60,38 L54,54 L44,64 L30,70 Z" fill="url(#baciag)"/>
-  </svg>
+<header>
   <div>
-    <div class="brand-name">Previne Taquari-Antas</div>
-    <h1>RNAs Santa Tereza — 4h</h1>
-    <p>Bacia Protegida, Comunidade Segura · ALT × CONV</p>
+    <h1>🌊 RNAs Santa Tereza — 4h</h1>
+    <p>Previne Taquari-Antas · ALT × CONV</p>
   </div>
   <div style="margin-left:auto;display:flex;gap:5px;align-items:center">
     <span class="tag tag-alt">ALT</span>
@@ -297,7 +205,6 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
         <label style="color:var(--mu)">Branch:</label>
         <input id="gh-branch" style="background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:3px 7px;border-radius:5px;font-size:.74rem;width:80px" placeholder="main">
         <button onclick="saveGHConfig()" style="background:var(--alt);border:none;color:#fff;padding:3px 10px;border-radius:5px;font-size:.72rem;cursor:pointer">Salvar &amp; recarregar</button>
-        <button onclick="resetGHConfig()" style="background:var(--s3);border:1px solid var(--br);color:var(--mu);padding:3px 8px;border-radius:5px;font-size:.72rem;cursor:pointer" title="Volta para fervier/rnas-santa-tereza-4h">↺ Resetar padrão</button>
         <span style="color:var(--mu);font-size:.68rem">ou:</span>
         <label style="cursor:pointer;display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--br);border-radius:5px;padding:3px 9px;font-size:.72rem">
           <span>📊 Atualizar métricas (XLSX)</span>
@@ -309,49 +216,8 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SEÇÃO: A BACIA — mapa interativo das estações
-════════════════════════════════════════════════ -->
-<section id="sec-bacia">
-  <div><span class="bacia-pill">A BACIA</span></div>
-  <h2>Onde ficam as estações</h2>
-  <p class="bacia-sub">A estação-alvo em Santa Tereza, a estação de montante e as estações de apoio usadas nas rodadas de modelagem. O tempo de translação estimado indica quando uma alteração no nível de cada estação chega a Santa Tereza.</p>
-  <div class="bacia-layout">
-    <div id="mapa-leaflet"></div>
-    <div class="bacia-cards" id="bacia-cards-list"></div>
-  </div>
-  <div class="bacia-note">
-    Marcadores sólidos: posição confirmada no registro da ANA/SGB.
-    Dados de nível: estações fluviométricas da rede ANA/SGB —
-    séries históricas no <a href="https://www.snirh.gov.br/hidroweb/" target="_blank">HidroWeb</a> ·
-    telemetria em tempo real no <a href="https://telemetriaws1.ana.gov.br/" target="_blank">Sistema Telemetria ANA</a>.
-    ⚠ Tempos de translação são estimativas; valores exatos dependem da magnitude do evento.
-  </div>
-</section>
-
 <div class="layout">
 <main id="main-area">
-
-<!-- Seletor de vista + abas de métrica (para vista Famílias) -->
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-  <div class="view-seg">
-    <button class="view-btn active" id="vbtn-tab" onclick="toggleView('tabela')">Tabela</button>
-    <button class="view-btn"        id="vbtn-fam" onclick="toggleView('familias')">Desempenho por família</button>
-  </div>
-  <div class="mbar" id="mbar-wrap" style="display:none">
-    <span style="font-size:.7rem;color:var(--mu)">Métrica:</span>
-    <button class="mtab active" onclick="setMetric('media_pers',this)">Geral</button>
-    <button class="mtab"        onclick="setMetric('PERS_treino',this)">Treino</button>
-    <button class="mtab"        onclick="setMetric('PERS_validacao',this)">Validação</button>
-    <button class="mtab"        onclick="setMetric('PERS_teste',this)">Teste</button>
-    <button class="mtab"        onclick="setMetric('score_equilibrio',this)">Equilíbrio</button>
-  </div>
-</div>
-
-<!-- Vista Famílias -->
-<div id="fam-view">
-  <div id="fam-grid" class="fam-grid"></div>
-</div>
 
 <div class="fbar">
   <label>Tipo:</label>
@@ -481,12 +347,8 @@ const GH_DEFAULTS={user:'fervier',repo:'rnas-santa-tereza-4h',branch:'main'};
 
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
-function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
 function ghCfg(){
-  // Valida: se o valor salvo for um placeholder, ignora
-  const placeholders=['seu_usuario_github','seu-usuario',''];
-  const raw_u=lsGet('gh_user')||'';
-  const u=placeholders.includes(raw_u.trim())?GH_DEFAULTS.user:raw_u.trim()||GH_DEFAULTS.user;
+  const u=lsGet('gh_user')||GH_DEFAULTS.user;
   const r=lsGet('gh_repo')||GH_DEFAULTS.repo;
   const b=lsGet('gh_branch')||GH_DEFAULTS.branch;
   return{user:u,repo:r,branch:b,base:`https://raw.githubusercontent.com/${u}/${r}/${b}`};
@@ -497,10 +359,6 @@ function saveGHConfig(){
   const b=document.getElementById('gh-branch').value.trim();
   if(!u||!r||!b){alert('Preencha todos os campos.');return;}
   lsSet('gh_user',u);lsSet('gh_repo',r);lsSet('gh_branch',b);
-  PRED_IDX.clear();init();
-}
-function resetGHConfig(){
-  lsDel('gh_user');lsDel('gh_repo');lsDel('gh_branch');
   PRED_IDX.clear();init();
 }
 function fillGHInputs(){
@@ -572,8 +430,7 @@ async function init(){
     showLoading(false);
     // AUTO-TESTE: verifica se fetch de CSV funciona (diagnóstico)
     try{
-      const testR=(RAW.find(x=>x.obs_key==='R5_R7'&&x.tem_previsao))||null;
-      const testMn=testR&&(testR.mat_nome||testR.modelo);
+      const testMn=(RAW.find(x=>x.obs_key==='R5_R7')||{}).modelo;
       if(testMn){
         const enc2=encodeURIComponent(testMn);
         const testUrl=`${c.base}/modelos/${enc2}/${enc2}_previsoes.csv`;
@@ -672,7 +529,7 @@ function upStats(){
   const wq=rs.filter(r=>r.score_equilibrio!=null);
   const bestQ=[...wq].sort((a,b)=>b.score_equilibrio-a.score_equilibrio)[0];
   const cv=rs.filter(r=>r.tipo==='CONV'),alt=rs.filter(r=>r.tipo==='ALT');
-  const hyd=RAW.filter(r=>r.tem_previsao||PRED_IDX.has(r.modelo)).length;
+  const hyd=RAW.filter(r=>PRED_IDX.has(r.modelo)).length;
   set('s0',rs.length);set('s0b',`${cv.length} CONV · ${alt.length} ALT`);
   set('s1',f4(best?.PERS_teste));set('s1b',best?`${best.combo_id} (${best.tipo})`:'—');
   set('s2',f4(avgT));set('s2b',`CONV: ${f4(av(cv.filter(r=>r.PERS_teste!=null),'PERS_teste'))} · ALT: ${f4(av(alt.filter(r=>r.PERS_teste!=null),'PERS_teste'))}`);
@@ -729,7 +586,7 @@ function rt(){
   const start=pg*ps,page=FLT.slice(start,start+ps);
   const bestT=Math.max(...FLT.map(r=>r.PERS_teste??-Infinity));
   document.getElementById('tbody').innerHTML=page.map((r,i)=>{
-    const rank=start+i+1,isB=r.PERS_teste===bestT,hasP=r.tem_previsao||PRED_IDX.has(r.modelo);
+    const rank=start+i+1,isB=r.PERS_teste===bestT,hasP=PRED_IDX.has(r.modelo);
     return `<tr class="${r.tipo==='CONV'?'cv':''}" onclick="showDetail('${encodeURIComponent(r.modelo)}',this)">
       <td class="mu2">${rank}</td><td><span class="tag tag-${r.tipo.toLowerCase()}">${r.tipo}</span></td>
       <td class="fw" title="${r.modelo}">${r.combo_id||r.modelo.slice(-16)}${isB?'<span class="bst">TOP</span>':''}${hasP?'<span class="dot-f" title="hidrograma disponível"></span>':''}</td>
@@ -757,136 +614,41 @@ function cp(d){const t=Math.ceil(FLT.length/ps);pg=Math.max(0,Math.min(pg+d,t-1)
 // FETCH PREVISÕES DO GITHUB (sob demanda)
 // ════════════════════════════════════════════════════
 const FETCH_ERR={};
-async function fetchPreds(mn,matNome){
+async function fetchPreds(mn){
   if(PRED_IDX.has(mn))return PRED_IDX.get(mn);
   const c=ghCfg();
-  const fileId=matNome||mn;
-  const enc=encodeURIComponent(fileId);
+  const enc=encodeURIComponent(mn);
   const url=`${c.base}/modelos/${enc}/${enc}_previsoes.csv`;
   try{
     const resp=await fetch(url);
     if(!resp.ok){FETCH_ERR[mn]={url,status:resp.status,msg:`HTTP ${resp.status}`};return null;}
     const text=await resp.text();
-    const vals=text.trim().split(String.fromCharCode(10)).map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v));
-    if(!vals.length){FETCH_ERR[mn]={url,status:200,msg:`CSV vazio ou sem números (${text.length} bytes)`};return null;}
-    PRED_IDX.set(mn,vals);
-    return vals;
+    const lines=text.trim().split(String.fromCharCode(10));
+    let result;
+    if(lines[0]&&lines[0].includes(',')){
+      // Formato rico (R6): dt,ev,obs,pred
+      const preds=[],obsArr=[];
+      for(const line of lines){
+        const pts=line.trim().split(',');
+        if(pts.length<4)continue;
+        const predv=parseFloat(pts[3]);
+        const obsv=parseFloat(pts[2]);
+        if(isNaN(predv))continue;
+        preds.push(predv);
+        obsArr.push([pts[0],parseInt(pts[1])||0,obsv]);
+      }
+      if(!preds.length){FETCH_ERR[mn]={url,status:200,msg:`CSV rico vazio (${text.length} bytes)`};return null;}
+      result={preds,obsArr,isRich:true};
+    } else {
+      // Formato legado (R5): um float por linha
+      const vals=lines.map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v));
+      if(!vals.length){FETCH_ERR[mn]={url,status:200,msg:`CSV vazio ou sem números (${text.length} bytes)`};return null;}
+      result=vals;
+    }
+    PRED_IDX.set(mn,result);
+    const shyd=document.getElementById('s-hyd');if(shyd)shyd.textContent=PRED_IDX.size;
+    return result;
   }catch(e){FETCH_ERR[mn]={url,status:'ERR',msg:String(e)};return null;}
-}
-
-// ════════════════════════════════════════════════════
-// VISTA FAMÍLIAS
-// ════════════════════════════════════════════════════
-let viewMode='tabela', famMetric='media_pers';
-
-function toggleView(mode){
-  viewMode=mode;
-  document.getElementById('vbtn-tab').classList.toggle('active',mode==='tabela');
-  document.getElementById('vbtn-fam').classList.toggle('active',mode==='familias');
-  document.getElementById('mbar-wrap').style.display=mode==='familias'?'flex':'none';
-  document.getElementById('fam-view').style.display=mode==='familias'?'block':'none';
-  const hide=mode==='familias';
-  ['.sg','.cg2x','.cf','.cg2','.cg3','.tc','.fbar'].forEach(sel=>{
-    document.querySelectorAll(sel).forEach(el=>el.style.display=hide?'none':'');
-  });
-  if(mode==='familias')buildFamiliaView();
-}
-
-function setMetric(metric,btn){
-  famMetric=metric;
-  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  buildFamiliaView();
-}
-
-function metricVal(r,metric){
-  return r[metric]!=null?r[metric]:null;
-}
-
-function metricLabel(metric){
-  return {media_pers:'PERS Geral',PERS_treino:'PERS Treino',PERS_validacao:'PERS Val',PERS_teste:'PERS Teste',score_equilibrio:'Equilíbrio'}[metric]||metric;
-}
-
-function getFamily(r){
-  const fr=(r.fonte_rodada||'').toUpperCase();
-  if(r.tipo==='CONV') return {key:'CONV',label:'4h — Convencional',sub:'Modelos convencionais',color:'var(--conv)'};
-  if(fr.includes('QUINTA')||fr.includes('R5_R7')||fr.includes('RODADA_R7'))
-    return {key:'ALT_R5',label:'4h ALT — Quinta Rodada (R5)',sub:'10 combos · rotação R7',color:'var(--alt)'};
-  if(fr.includes('SEXTA'))
-    return {key:'ALT_R6',label:'4h ALT — Sexta Rodada (R6)',sub:'10 combos × 25 rotações',color:'var(--alt)'};
-  return {key:'OUTRO',label:'4h — Outros',sub:'',color:'#94a3b8'};
-}
-
-function buildFamiliaView(){
-  const grid=document.getElementById('fam-grid');if(!grid)return;
-  // Agrupar modelos
-  const groups=new Map();
-  for(const r of RAW){
-    const fam=getFamily(r);
-    if(!groups.has(fam.key))groups.set(fam.key,{fam,models:[]});
-    groups.get(fam.key).models.push(r);
-  }
-  // Ordenar grupos e construir HTML
-  const order=['CONV','ALT_R5','ALT_R6','OUTRO'];
-  grid.innerHTML='';
-  order.forEach(key=>{
-    if(!groups.has(key))return;
-    const {fam,models}=groups.get(key);
-    grid.appendChild(buildFamCard(fam,models));
-  });
-}
-
-function buildFamCard(fam,models){
-  const metric=famMetric;
-  const sorted=models.filter(r=>metricVal(r,metric)!=null)
-    .sort((a,b)=>(metricVal(b,metric)||0)-(metricVal(a,metric)||0));
-  const threshold=0.5;
-  const above=sorted.filter(r=>(metricVal(r,metric)||0)>=threshold).length;
-  const top=sorted.slice(0,10);
-  const best=metricVal(sorted[0],metric)||0;
-
-  const col=v=>v>=0.8?'#4ade80':v>=0.6?'#fbbf24':'#f87171';
-  const items=top.map((r,i)=>{
-    const v=metricVal(r,metric)??0;
-    const pct=best>0?(v/best*100):0;
-    const mae=r.MAE_teste!=null?r.MAE_teste.toFixed(1)+' cm':'—';
-    const name=r.combo_id||r.modelo.slice(-20);
-    const encm=encodeURIComponent(r.modelo);
-    return `<div class="fam-item" onclick="openFromFam('${encm}')">
-      <span class="fam-rank">${i+1}</span>
-      <div class="fam-info">
-        <div class="fam-name" title="${r.modelo}">${name}</div>
-        <div class="fam-mae">MAE teste ${mae}</div>
-      </div>
-      <div class="fam-right">
-        <div class="fam-val" style="color:${col(v)}">${v.toFixed(3)}</div>
-        <div class="fam-bar-wrap"><div class="fam-bar-fill" style="width:${pct.toFixed(0)}%;background:${col(v)}"></div></div>
-      </div>
-    </div>`;
-  }).join('');
-
-  const card=document.createElement('div');
-  card.className='fam-card';
-  card.innerHTML=`
-    <div class="fam-card-hdr">
-      <div>
-        <h4 style="color:${fam.color}">${fam.label}</h4>
-        <div class="fam-subtitle">${fam.sub}</div>
-      </div>
-      <div class="fam-cnt">${above} de ${models.length}<br>acima de ${threshold}</div>
-    </div>
-    <div class="fam-body">${items||'<div style="color:var(--mu);font-size:.75rem;padding:8px 0">Sem dados</div>'}</div>`;
-  return card;
-}
-
-function openFromFam(enc){
-  // Mudar para vista tabela, filtrar e abrir painel
-  const mn=decodeURIComponent(enc);
-  const r=RAW.find(x=>x.modelo===mn);if(!r)return;
-  selRow=r;selModelName=mn;
-  const dp=document.getElementById('dp');dp.classList.add('open');
-  document.getElementById('dp-backdrop').classList.add('open');
-  _renderDetailPanel(r);
 }
 
 // ════════════════════════════════════════════════════
@@ -896,105 +658,55 @@ async function showDetail(enc,trEl){
   const mn=decodeURIComponent(enc);
   const r=RAW.find(x=>x.modelo===mn);if(!r)return;
   document.querySelectorAll('#tbody tr').forEach(t=>t.classList.remove('sel'));
-  if(trEl)trEl.classList.add('sel');
-  selRow=r;selModelName=mn;
+  trEl.classList.add('sel');selRow=r;selModelName=mn;
   const dp=document.getElementById('dp');dp.classList.add('open');
   document.getElementById('dp-backdrop').classList.add('open');
-  _renderDetailPanel(r);
-}
-
-async function _renderDetailPanel(r){
-  const mn=r.modelo;
-  const fileId=r.mat_nome||mn;
   document.getElementById('dp-title').textContent=r.combo_id||r.modelo;
   document.getElementById('dp-sub').textContent=`${r.tipo} · ${r.fonte_rodada}`;
 
   const c=ghCfg();
-  const enc2=encodeURIComponent(fileId);
+  const enc2=encodeURIComponent(mn);
   const matUrl=`${c.base}/modelos/${enc2}/${enc2}.mat`;
   const csvUrl=`${c.base}/modelos/${enc2}/${enc2}_previsoes.csv`;
 
-  // Tags
-  const isConv=r.tipo==='CONV';
-  const tagTipo=`<span class="dp-tag ${isConv?'t-conv':'t-tipo'}">${r.tipo}</span>`;
-  const tagRot=r.rotacao?`<span class="dp-tag t-rot">rotação ${r.rotacao}</span>`:'';
-  const tagNh=`<span class="dp-tag t-info">${r.neuronios} neurônios</span>`;
-  const tagNi=`<span class="dp-tag t-info">${r.n_inputs} inputs</span>`;
-  const tagNtot=`<span class="dp-tag t-info">N=${r.N_treino+r.N_validacao+r.N_teste}</span>`;
-  const rodLabel=(r.fonte_rodada||'').replace('RNA_4H_','').replace(/_/g,' ').toLowerCase();
-  const tagRod=`<span class="dp-tag t-info">${rodLabel}</span>`;
-
-  // PERS barras horizontais
-  const persRows=[
-    ['Geral', r.media_pers],
-    ['Treino', r.PERS_treino],
-    ['Validação', r.PERS_validacao],
-    ['Teste', r.PERS_teste],
-  ].map(([lbl,v])=>{
-    const col=v==null?'#475569':v>=0.8?'#4ade80':v>=0.6?'#fbbf24':'#f87171';
-    const pct=v!=null?Math.max(0,Math.min(100,v*100)):0;
-    const neg=v!=null&&v<0?`<span style="color:#f87171;font-size:.65rem">⚠</span> `:'';
-    return `<div class="hbar-row">
-      <span class="hbar-label">${lbl}</span>
-      <div class="hbar-track"><div class="hbar-fill" style="width:${pct}%;background:${col}"></div></div>
-      <span class="hbar-val" style="color:${col}">${neg}${v!=null?v.toFixed(3):'—'}</span>
-    </div>`;
-  }).join('');
-
-  // MAE grid
-  const maeGrid=[
-    ['Treino',r.MAE_treino,r.E95_treino],
-    ['Val',   r.MAE_val,   r.E95_val],
-    ['Teste', r.MAE_teste, r.E95_teste],
-  ].map(([lbl,mae,e95])=>`
-    <div class="err-cell">
-      <div class="el">${lbl}</div>
-      <div class="ev">${mae!=null?mae.toFixed(1):'—'} cm</div>
-      <div class="el" style="margin-top:4px">E95</div>
-      <div class="ev" style="font-size:.78rem">${e95!=null?e95.toFixed(1):'—'} cm</div>
-    </div>`).join('');
-
-  const dprow=(k,v)=>`<div class="dp-row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  const pg2=(k)=>{const v=r[k];const col=v==null?'#94a3b8':v>=0.8?'#22c55e':v>=0.6?'#f59e0b':'#ef4444';const pct=v!=null?Math.max(0,Math.min(100,v*100)):0;return `<div class="pc"><div class="pl">${k.replace('PERS_','PERS ')}</div><div class="pv" style="color:${col}">${v!=null?v.toFixed(4):'—'}</div><div class="pb" style="background:${col};width:${pct}%"></div></div>`;}
+  const dprow=(k,v,cls='')=>`<div class="dp-row"><span class="k">${k}</span><span class="v ${cls}">${v}</span></div>`;
   const ghBtn=(lbl,icon,url,fn)=>`<a class="fbtn" href="${url}" target="_blank" download="${fn}"><span class="fi">${icon}</span><div class="fd"><div class="fn">${lbl}</div><div class="fs">${fn}</div></div><span class="fa">↓ GitHub</span></a>`;
 
   document.getElementById('dp-body').innerHTML=`
-    <div class="dp-tags">${tagTipo}${tagRod}${tagRot}${tagNh}${tagNi}${tagNtot}</div>
-
-    <div class="dp-sec"><h4>Persistência por recorte</h4>
-      <div class="hbar-wrap">${persRows}</div>
-      ${dprow('Spread PERS',f4(r.spread_pers))}
-      ${dprow('Score Equilíbrio',f4(r.score_equilibrio))}
-    </div>
-
-    <div class="dp-sec"><h4>Erro em centímetros</h4>
-      <div class="err-grid3">${maeGrid}</div>
-      ${dprow('CE Treino',f4(r.CE_treino))} ${dprow('CE Val',f4(r.CE_val))} ${dprow('CE Teste',f4(r.CE_teste))}
-    </div>
-
     <div class="dp-sec" id="dp-hydro-sec">
-      <h4>🌊 Hidrogramas — por Evento</h4>
+      <h4>🌊 Hidrogramas</h4>
       <div class="preds-loading"><div class="spin-sm"></div>&nbsp;Buscando previsões do GitHub…</div>
     </div>
-
-    <div class="dp-sec" id="dp-scatter-sec" style="display:none">
-      <h4>Dispersão Observado × RNA</h4>
-      <div class="scatter-row">
-        <div><div class="scatter-lbl">Validação · <span id="sc-n-val">—</span> pts</div><div class="scatter-cw"><canvas id="sc-val"></canvas></div></div>
-        <div><div class="scatter-lbl">Teste · <span id="sc-n-te">—</span> pts</div><div class="scatter-cw"><canvas id="sc-te"></canvas></div></div>
-      </div>
+    <div class="dp-sec"><h4>PERS</h4>
+      <div class="pg4">${pg2('PERS_treino')}${pg2('PERS_validacao')}${pg2('PERS_teste')}${pg2('PERS_geral')}</div>
+      ${dprow('Média PERS',f4(r.media_pers))}${dprow('Spread',f4(r.spread_pers),r.spread_pers!=null&&r.spread_pers<0.1?'g':r.spread_pers!=null&&r.spread_pers>0.2?'b':'')}
+      ${dprow('Score Equilíbrio',f4(r.score_equilibrio),r.score_equilibrio!=null&&r.score_equilibrio>=0.9?'g':'')}
     </div>
-
+    <div class="dp-sec"><h4>MAE &amp; E95 (cm)</h4>
+      ${dprow('MAE Val',f2(r.MAE_val)+' cm')}${dprow('MAE Teste',f2(r.MAE_teste)+' cm')}
+      ${dprow('E95 Val',r.E95_val!=null?r.E95_val.toFixed(1)+' cm':'—')}${dprow('E95 Teste',r.E95_teste!=null?r.E95_teste.toFixed(1)+' cm':'—')}
+    </div>
+    <div class="dp-sec"><h4>CE</h4>
+      ${dprow('CE Treino',f4(r.CE_treino))}${dprow('CE Val',f4(r.CE_val))}${dprow('CE Teste',f4(r.CE_teste))}${dprow('CE Geral',f4(r.CE_geral))}
+    </div>
     <div class="dp-sec"><h4>Arquivos</h4>
-      ${ghBtn('Modelo MATLAB (.mat)','🧠',matUrl,mn+'.mat')}
-      ${ghBtn('Previsões (.csv)','📈',csvUrl,mn+'_previsoes.csv')}
+      ${ghBtn('MATLAB (.mat)','🧠',matUrl,mn+'.mat')}
+      ${ghBtn('Previsões CSV','📈',csvUrl,mn+'_previsoes.csv')}
     </div>
     <div class="dp-sec"><h4>Configuração</h4>
-      ${dprow('N Treino',r.N_treino)} ${dprow('N Validação',r.N_validacao)} ${dprow('N Teste',r.N_teste)}
+      ${dprow('Tipo',r.tipo)}${dprow('Neurônios',r.neuronios)}${dprow('Inputs',r.n_inputs)}
+      ${dprow('N Treino',r.N_treino)}${dprow('N Val',r.N_validacao)}${dprow('N Teste',r.N_teste)}
+      ${dprow('Status',r.status||'—')}${dprow('Rotação',r.rotacao||'—')}
     </div>`;
 
-  // Buscar previsões e montar hidrogramas + scatter
-  const preds=await fetchPreds(mn,r.mat_nome);
-  const obs=r.obs_key?OBS[r.obs_key]:null;
+  // Async: fetch predictions and render hydro
+  const fetchResult=await fetchPreds(mn);
+  let preds=null,obs=null;
+  if(fetchResult){
+    if(fetchResult.isRich){preds=fetchResult.preds;obs=fetchResult.obsArr;}
+    else{preds=fetchResult;obs=r.obs_key?OBS[r.obs_key]:null;}
+  }
   let parts=null;
   if(preds&&obs&&r.N_treino){
     const nt=r.N_treino,nv=r.N_validacao,nts=r.N_teste;
@@ -1014,38 +726,7 @@ async function _renderDetailPanel(r){
   }
   const hydroSec=document.getElementById('dp-hydro-sec');
   if(hydroSec)hydroSec.outerHTML=buildHydroHtml(r,parts,preds);
-  if(parts){initHydroCharts(parts,r.tipo);renderScatterPlots(parts,r.tipo);}
-}
-
-function renderScatterPlots(parts,tipo){
-  const scSec=document.getElementById('dp-scatter-sec');
-  if(!scSec)return;
-  scSec.style.display='block';
-  const col=tipo==='CONV'?'rgba(56,189,248,.6)':'rgba(74,222,128,.6)';
-  ['val','te'].forEach(key=>{
-    const phase=key==='val'?'val':'teste';
-    const data=parts[phase].obs.map(([,,obsv],i)=>({x:obsv,y:parts[phase].pred[i]})).filter(p=>p.x!=null&&p.y!=null);
-    const nEl=document.getElementById(`sc-n-${key}`);if(nEl)nEl.textContent=data.length;
-    const canvas=document.getElementById(`sc-${key}`);if(!canvas)return;
-    if(CH[`sc-${key}`]){CH[`sc-${key}`].destroy();delete CH[`sc-${key}`];}
-    const allV=data.flatMap(p=>[p.x,p.y]);
-    const mn2=Math.min(...allV),mx=Math.max(...allV);
-    CH[`sc-${key}`]=new Chart(canvas,{
-      type:'scatter',
-      data:{datasets:[
-        {label:'RNA × Obs',data,backgroundColor:col,pointRadius:2.5,pointHoverRadius:4},
-        {label:'Acerto perfeito',data:[{x:mn2,y:mn2},{x:mx,y:mx}],type:'line',borderColor:'#475569',borderWidth:1,pointRadius:0,borderDash:[4,3]}
-      ]},
-      options:{
-        responsive:true,maintainAspectRatio:false,animation:{duration:0},
-        plugins:{legend:{labels:{boxWidth:8,font:{size:9}}},tooltip:{callbacks:{label:ctx=>`obs: ${ctx.raw.x?.toFixed(1)} | RNA: ${ctx.raw.y?.toFixed(1)}`}}},
-        scales:{
-          x:{title:{display:true,text:'observado (cm)',font:{size:8}},grid:{color:'#1e3422'},ticks:{maxTicksLimit:5,font:{size:8}}},
-          y:{title:{display:true,text:'RNA (cm)',font:{size:8}},grid:{color:'#1e3422'},ticks:{maxTicksLimit:5,font:{size:8}}}
-        }
-      }
-    });
-  });
+  if(parts)initHydroCharts(parts,r.tipo);
 }
 
 // ════════════════════════════════════════════════════
@@ -1179,100 +860,6 @@ function closePanel(){
   selRow=null;_curParts=null;_evMeta=null;selModelName=null;
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
-</script>
-
-<!-- ═══════════════════════════════════════════════
-     MAPA INTERATIVO — Leaflet + estações ANA
-════════════════════════════════════════════════ -->
-<script>
-(function initMapaBacia(){
-  // ── Dados das estações ─────────────────────────────────────────────
-  // Coordenadas: registro ANA/SGB (verificar em snirh.gov.br/hidroweb)
-  // Translação: estimativa média; varia conforme magnitude do evento
-  const ESTACOES = [
-    {
-      cod:'86472600', nome:'Santa Tereza', rio:'Rio Taquari',
-      desc:'Estação-alvo — onde o nível é previsto pelas RNAs',
-      tipo:'alvo', lat:-28.8584, lon:-51.7317, transl:null
-    },
-    {
-      cod:'86472000', nome:'Linha José Júlio', rio:'Rio das Antas',
-      desc:'Estação de montante — telemetria de alta frequência (ALT)',
-      tipo:'montante', lat:-28.7167, lon:-51.5386, transl:'~4–6 h'
-    },
-    {
-      cod:'86448000', nome:'Veranópolis', rio:'Rio das Antas',
-      desc:'Estação de apoio — bacia das Antas',
-      tipo:'apoio', lat:-28.9295, lon:-51.5578, transl:'~8–12 h'
-    },
-    {
-      cod:'86507000', nome:'Carreiro', rio:'Rio Carreiro',
-      desc:'Estação de apoio — afluente pelo rio Carreiro',
-      tipo:'apoio', lat:-28.8833, lon:-52.0083, transl:'~12–18 h'
-    },
-    {
-      cod:'86125130', nome:'Ituim', rio:'Rio Ituim',
-      desc:'Estação de apoio — afluente pelo rio Ituim',
-      tipo:'apoio', lat:-29.0533, lon:-51.5306, transl:'~10–14 h'
-    },
-    {
-      cod:'86125500', nome:'Prata Caxias', rio:'Rio Pelotas',
-      desc:'Estação de apoio — planalto, rio da Prata',
-      tipo:'apoio', lat:-29.1694, lon:-51.2611, transl:'~18–24 h'
-    },
-  ];
-
-  // ── Cores por tipo ─────────────────────────────────────────────────
-  const COR = { alvo:'#f59e0b', montante:'#3b82f6', apoio:'#4a8c3a' };
-
-  function svgDot(cor, r=7){
-    return L.divIcon({
-      className:'',
-      html:`<svg width="${r*2+2}" height="${r*2+2}"><circle cx="${r+1}" cy="${r+1}" r="${r}" fill="${cor}" stroke="#fff" stroke-width="2"/></svg>`,
-      iconSize:[r*2+2, r*2+2], iconAnchor:[r+1, r+1]
-    });
-  }
-
-  // ── Inicializar mapa ───────────────────────────────────────────────
-  const map = L.map('mapa-leaflet', {
-    center: [-28.95, -51.65], zoom: 9,
-    zoomControl: true, scrollWheelZoom: false
-  });
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 18
-  }).addTo(map);
-
-  // ── Marcadores e cards ────────────────────────────────────────────
-  const cardList = document.getElementById('bacia-cards-list');
-  ESTACOES.forEach(est => {
-    const cor = COR[est.tipo] || '#888';
-    const marker = L.marker([est.lat, est.lon], {icon: svgDot(cor)}).addTo(map);
-    marker.bindPopup(
-      `<strong>${est.nome}</strong><br>` +
-      `<span style="color:#555;font-size:.8em">${est.rio} · cód. ${est.cod}</span><br>` +
-      `<span style="font-size:.8em">${est.desc}</span>` +
-      (est.transl ? `<br><span style="color:#3d7a2e;font-weight:600;font-size:.8em">⏱ Translação: ${est.transl}</span>` : '')
-    );
-
-    // Card na lista lateral
-    const card = document.createElement('div');
-    card.className = 'bacia-card';
-    card.innerHTML =
-      `<div class="bacia-card-dot" style="background:${cor}"></div>` +
-      `<div class="bacia-card-info">` +
-        `<div class="bacia-card-nome">${est.nome}</div>` +
-        `<div class="bacia-card-desc">${est.desc}</div>` +
-        (est.transl ? `<span class="bacia-card-transl">⏱ ${est.transl} até Santa Tereza</span>` : '') +
-        `<div class="bacia-card-cod">${est.rio} · cód. ${est.cod}</div>` +
-      `</div>`;
-    card.addEventListener('mouseenter', () => marker.openPopup());
-    card.addEventListener('mouseleave', () => marker.closePopup());
-    card.addEventListener('click', () => { map.setView([est.lat, est.lon], 11); marker.openPopup(); });
-    cardList.appendChild(card);
-  });
-})();
 </script>
 </body>
 </html>
