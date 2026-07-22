@@ -265,6 +265,7 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
     <option value="score_equilibrio_d">↓ Score Equil.</option>
     <option value="spread_pers_a">↑ Spread</option>
     <option value="MAE_teste_a">↑ MAE Teste</option>
+    <option value="peak_mae_pct_a">↑ Menor Erro de Pico</option>
     <option value="combo_id_a">A-Z Combo</option>
   </select>
 </div>
@@ -334,6 +335,8 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
         <th onclick="sc2('MAE_val')">MAE Val↕</th>
         <th onclick="sc2('MAE_teste')">MAE Teste↕</th>
         <th onclick="sc2('E95_teste')">E95↕</th>
+        <th onclick="sc2('peak_mae_pct')" title="Erro relativo médio no pico do evento (%)">Pico%↕</th>
+        <th onclick="sc2('peak_bias_cm')" title="Viés médio no pico (cm)">Viés Pico↕</th>
         <th>nh</th><th>inp</th><th>🌊</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
@@ -752,6 +755,8 @@ function rt(){
       <td>${r.score_equilibrio!=null?`<span class="${r.score_equilibrio>0.35?'g':r.score_equilibrio>0.2?'m':'b'}">${f4(r.score_equilibrio)}</span>`:'—'}</td>
       <td>${r.MAE_val!=null?f2(r.MAE_val):'—'}</td><td>${r.MAE_teste!=null?f2(r.MAE_teste):'—'}</td>
       <td>${r.E95_teste!=null?r.E95_teste.toFixed(1):'—'}</td>
+      <td>${r.peak_mae_pct!=null?`<span class="${r.peak_mae_pct<5?'g':r.peak_mae_pct<12?'m':'b'}">${r.peak_mae_pct.toFixed(1)}%</span>`:'<span style="color:var(--br)">—</span>'}</td>
+      <td>${r.peak_bias_cm!=null?`<span class="${Math.abs(r.peak_bias_cm)<20?'g':Math.abs(r.peak_bias_cm)<50?'m':'b'}">${r.peak_bias_cm>0?'+':''}${r.peak_bias_cm.toFixed(0)}cm</span>`:'<span style="color:var(--br)">—</span>'}</td>
       <td class="mu2">${r.neuronios}</td><td class="mu2">${r.n_inputs}</td>
       <td>${hasP?'🌊':'<span style="color:var(--br)">·</span>'}</td>
     </tr>`;
@@ -843,6 +848,13 @@ async function showDetail(enc,trEl){
       ${dprow('MAE Val',f2(r.MAE_val)+' cm')}${dprow('MAE Teste',f2(r.MAE_teste)+' cm')}
       ${dprow('E95 Val',r.E95_val!=null?r.E95_val.toFixed(1)+' cm':'—')}${dprow('E95 Teste',r.E95_teste!=null?r.E95_teste.toFixed(1)+' cm':'—')}
     </div>
+    ${r.peak_mae_pct!=null?`<div class="dp-sec"><h4>🎯 Desempenho nos Picos</h4>
+      ${dprow('Erro no Pico (médio)',r.peak_mae_pct.toFixed(1)+'%',r.peak_mae_pct<5?'g':r.peak_mae_pct<12?'':' b')}
+      ${dprow('Viés no Pico',(r.peak_bias_cm>0?'+':'')+r.peak_bias_cm.toFixed(0)+' cm',Math.abs(r.peak_bias_cm)<20?'g':Math.abs(r.peak_bias_cm)<50?'':'b')}
+      ${dprow('Timing do Pico',(r.peak_timing_h>0?'+':'')+r.peak_timing_h.toFixed(1)+' h',Math.abs(r.peak_timing_h)<8?'g':Math.abs(r.peak_timing_h)<20?'':' b')}
+      ${dprow('Eventos analisados',r.n_eventos_pico+' eventos')}
+    </div>`:''}
+    <div id="dp-peak-sec"></div>
     <div class="dp-sec"><h4>CE</h4>
       ${dprow('CE Treino',f4(r.CE_treino))}${dprow('CE Val',f4(r.CE_val))}${dprow('CE Teste',f4(r.CE_teste))}${dprow('CE Geral',f4(r.CE_geral))}
     </div>
@@ -882,7 +894,7 @@ async function showDetail(enc,trEl){
   }
   const hydroSec=document.getElementById('dp-hydro-sec');
   if(hydroSec)hydroSec.outerHTML=buildHydroHtml(r,parts,preds);
-  if(parts)initHydroCharts(parts,r.tipo);
+  if(parts){initHydroCharts(parts,r.tipo);renderPeakTable(parts);}
 }
 
 // ════════════════════════════════════════════════════
@@ -1013,6 +1025,61 @@ function selectEvent(evNum){
       }
     }
   });
+}
+
+function renderPeakTable(parts){
+  const sec=document.getElementById('dp-peak-sec');
+  if(!sec)return;
+  // Juntar todos os eventos de todas as fases
+  const allEv=new Map();
+  const phColors={treino:'#f59e0b',val:'#3b82f6',teste:'#10b981'};
+  for(const[ph,p] of Object.entries(parts)){
+    p.events.forEach((pts,ev)=>{
+      if(!allEv.has(ev))allEv.set(ev,{pts:[],ph});
+      allEv.get(ev).pts.push(...pts);
+    });
+  }
+  const rows=[];
+  allEv.forEach((d,ev)=>{
+    const pts=d.pts.filter(x=>x.obs!=null&&x.pred!=null);
+    if(pts.length<2)return;
+    const obsV=pts.map(x=>x.obs),predV=pts.map(x=>x.pred);
+    const pkObs=Math.max(...obsV);
+    const iPkObs=obsV.indexOf(pkObs);
+    const iPkPred=predV.indexOf(Math.max(...predV));
+    const predAtPk=predV[iPkObs];
+    const erp=pkObs>0?Math.abs(predAtPk-pkObs)/pkObs*100:null;
+    const bias=predAtPk-pkObs;
+    const timH=(iPkPred-iPkObs)*4;
+    rows.push({ev,pkObs,predAtPk,erp,bias,timH,n:pts.length,ph:d.ph});
+  });
+  if(!rows.length){sec.innerHTML='';return;}
+  rows.sort((a,b)=>a.erp-b.erp);
+  const colERP=v=>v==null?'—':`<span class="${v<5?'g':v<15?'m':'b'}">${v.toFixed(1)}%</span>`;
+  const colBias=v=>`<span class="${Math.abs(v)<20?'g':Math.abs(v)<50?'m':'b'}">${v>0?'+':''}${v.toFixed(0)}</span>`;
+  const colTim=v=>`<span class="${Math.abs(v)<8?'g':Math.abs(v)<20?'m':'b'}">${v>0?'+':''}${v.toFixed(0)}h</span>`;
+  const phBadge=ph=>`<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-size:.6rem;background:${phColors[ph]||'#475569'}20;color:${phColors[ph]||'#94a3b8'};border:1px solid ${phColors[ph]||'#475569'}40">${ph==='treino'?'TR':ph==='val'?'VL':'TE'}</span>`;
+  sec.innerHTML=`<div class="dp-sec"><h4>🎯 Desempenho por Evento — Acerto no Pico</h4>
+    <div style="overflow-x:auto"><table style="font-size:.69rem;width:100%">
+      <thead><tr style="background:var(--s2)">
+        <th style="padding:4px 7px;text-align:left;color:var(--mu);font-size:.61rem">Evento</th>
+        <th style="padding:4px 7px;text-align:left;color:var(--mu);font-size:.61rem">Fase</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Pico Obs</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Prev@Pico</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Erro %</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Viés (cm)</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Timing</th>
+      </tr></thead>
+      <tbody>${rows.map(r=>`<tr style="border-bottom:1px solid var(--br);cursor:pointer" onclick="selectEvent(${r.ev})">
+        <td style="padding:4px 7px;font-weight:600">Ev ${r.ev}</td>
+        <td style="padding:4px 7px">${phBadge(r.ph)}</td>
+        <td style="padding:4px 7px;text-align:right">${r.pkObs.toFixed(0)} cm</td>
+        <td style="padding:4px 7px;text-align:right">${r.predAtPk.toFixed(0)} cm</td>
+        <td style="padding:4px 7px;text-align:right">${colERP(r.erp)}</td>
+        <td style="padding:4px 7px;text-align:right">${colBias(r.bias)}</td>
+        <td style="padding:4px 7px;text-align:right">${colTim(r.timH)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>`;
 }
 
 function closePanel(){
