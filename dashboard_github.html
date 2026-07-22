@@ -111,6 +111,28 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 .pg button{background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:2px 8px;border-radius:4px;cursor:pointer;font-size:.7rem}
 .pg button:disabled{opacity:.35;cursor:default}
 
+/* ═══ INSIGHTS ═══ */
+.ins-sec{background:var(--s1);border:1px solid var(--br);border-radius:8px;padding:16px 18px;margin-bottom:14px}
+.ins-hdr{font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:8px}
+.ins-hdr strong{color:var(--tx);font-size:.82rem;font-weight:700;text-transform:none;letter-spacing:0}
+.ins-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.ins-card{background:var(--bg);border:1px solid var(--br);border-radius:7px;padding:12px 14px;border-top:3px solid var(--br)}
+.ins-card.cv{border-top-color:var(--conv)}.ins-card.alt{border-top-color:var(--alt)}.ins-card.eq{border-top-color:#f59e0b}
+.ins-card .icl{font-size:.59rem;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.ins-card .icn{font-size:.84rem;font-weight:700;margin-bottom:7px}
+.ins-card .ics{display:flex;flex-wrap:wrap;gap:5px}
+.ins-card .ics span{background:var(--s1);border:1px solid var(--br);border-radius:4px;padding:2px 7px;font-size:.68rem;color:var(--mu)}
+.ins-card .ics span b{color:var(--tx)}
+.ins-charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.ins-learn{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ins-box{background:var(--bg);border:1px solid var(--br);border-radius:7px;padding:14px}
+.ins-box h4{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.ins-box h4.gn{color:#22c55e}.ins-box h4.yn{color:#f59e0b}
+.ins-item{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:.72rem;line-height:1.5;color:var(--tx)}
+.ins-item:last-child{margin-bottom:0}
+.ins-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.ins-item .im{color:var(--mu);font-size:.66rem;display:block;margin-top:2px}
+
 /* ═══ DETAIL PANEL ═══ */
 #dp{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);width:var(--pw);max-height:92vh;background:var(--s1);border:1px solid var(--br);border-radius:14px;z-index:200;overflow-y:auto;transition:transform .25s cubic-bezier(.4,0,.2,1),opacity .25s;display:flex;flex-direction:column;opacity:0;pointer-events:none;box-shadow:0 24px 60px rgba(0,0,0,.6)}
 #dp.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
@@ -284,6 +306,16 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
   <div class="cc"><h3>MAE Teste × PERS Teste</h3><div class="cw"><canvas id="c-mae"></canvas></div></div>
 </div>
 
+<div class="ins-sec" id="ins-sec" style="display:none">
+  <div class="ins-hdr">🔍 &nbsp;O que aprendemos com <strong id="ins-tot">—</strong></div>
+  <div class="ins-cards" id="ins-cards"></div>
+  <div class="ins-charts">
+    <div class="cc"><h3>Distribuição PERS Teste — CONV vs ALT</h3><div class="cw"><canvas id="c-ins-dist"></canvas></div></div>
+    <div class="cc"><h3>N° de Inputs × Média PERS Teste</h3><div class="cw"><canvas id="c-ins-inp"></canvas></div></div>
+  </div>
+  <div class="ins-learn" id="ins-learn"></div>
+</div>
+
 <div class="tc">
   <div class="th2">
     <h3>Tabela <span style="font-weight:400;font-size:.63rem;margin-left:5px">clique numa linha → hidrograma + detalhes</span></h3>
@@ -428,6 +460,7 @@ async function init(){
     const hdrSrc=document.getElementById('hdr-src');if(hdrSrc)hdrSrc.textContent=`· ${c.user}/${c.repo}`;
     if(ghStatus)ghStatus.textContent=`✓ ${RAW.length} modelos — ${c.user}/${c.repo}`;
     showLoading(false);
+    buildInsights();
     // AUTO-TESTE: verifica se fetch de CSV funciona (diagnóstico)
     try{
       const testMn=(RAW.find(x=>x.obs_key==='R5_R7')||{}).modelo;
@@ -447,6 +480,129 @@ async function init(){
 }
 async function reloadGH(){PRED_IDX.clear();await init();}
 window.addEventListener('load',init);
+
+// ════════════════════════════════════════════════════
+// INSIGHTS — lê RAW e monta seção analítica
+// ════════════════════════════════════════════════════
+function buildInsights(){
+  const sec=document.getElementById('ins-sec');
+  if(!sec||!RAW.length)return;
+  sec.style.display='';
+
+  const conv=RAW.filter(r=>r.tipo==='CONV'&&r.PERS_teste!=null);
+  const alt =RAW.filter(r=>r.tipo==='ALT' &&r.PERS_teste!=null);
+  const avg=arr=>arr.length?arr.reduce((s,v)=>s+v,0)/arr.length:null;
+  const pct=(n,tot)=>tot?((n/tot)*100).toFixed(1)+'%':'—';
+
+  document.getElementById('ins-tot').textContent=
+    `${RAW.length} modelos (${conv.length} CONV · ${alt.length} ALT)`;
+
+  // ── TOP MODEL CARDS ──────────────────────────────
+  const bestConv=[...conv].sort((a,b)=>b.PERS_teste-a.PERS_teste)[0];
+  const bestAlt =[...alt ].sort((a,b)=>b.PERS_teste-a.PERS_teste)[0];
+  const bestEq  =[...conv].filter(r=>r.score_equilibrio!=null&&r.PERS_validacao>0)
+                          .sort((a,b)=>b.score_equilibrio-a.score_equilibrio)[0];
+  function card(cls,lbl,m){
+    if(!m)return'';
+    const f=v=>v!=null?v.toFixed(4):'—';
+    return`<div class="ins-card ${cls}">
+      <div class="icl">${lbl}</div>
+      <div class="icn">${m.combo_id||m.modelo.slice(-18)}</div>
+      <div class="ics">
+        <span><b>${f(m.PERS_treino)}</b><br><span style="font-size:.6rem">Treino</span></span>
+        <span><b>${f(m.PERS_validacao)}</b><br><span style="font-size:.6rem">Val</span></span>
+        <span><b>${f(m.PERS_teste)}</b><br><span style="font-size:.6rem">Teste</span></span>
+        ${m.MAE_teste!=null?`<span><b>${m.MAE_teste.toFixed(1)} cm</b><br><span style="font-size:.6rem">MAE</span></span>`:''}
+        ${m.n_inputs!=null?`<span><b>${m.n_inputs} inp / ${m.neuronios||'?'} nh</b><br><span style="font-size:.6rem">Arq.</span></span>`:''}
+      </div>
+    </div>`;
+  }
+  document.getElementById('ins-cards').innerHTML=
+    card('cv','🟢 Melhor CONV — PERS Teste',bestConv)+
+    card('alt','🔵 Melhor ALT — PERS Teste',bestAlt)+
+    card('eq','🟡 Melhor CONV Equilibrado',bestEq);
+
+  // ── DISTRIBUIÇÃO PERS_teste ───────────────────────
+  const buckets=[[-9,0,'< 0'],[0,.5,'0 – 0.5'],[.5,.65,'0.5 – 0.65'],[.65,.75,'0.65 – 0.75'],[.75,.8,'0.75 – 0.80'],[.8,2,'≥ 0.80']];
+  const bLabels=buckets.map(b=>b[2]);
+  const bConv=buckets.map(([lo,hi])=>conv.filter(r=>r.PERS_teste>=lo&&r.PERS_teste<hi).length);
+  const bAlt =buckets.map(([lo,hi])=>alt .filter(r=>r.PERS_teste>=lo&&r.PERS_teste<hi).length);
+  if(CH['c-ins-dist'])CH['c-ins-dist'].destroy();
+  CH['c-ins-dist']=new Chart(document.getElementById('c-ins-dist'),{
+    type:'bar',
+    data:{labels:bLabels,datasets:[
+      {label:'CONV',data:bConv,backgroundColor:'rgba(16,185,129,.65)',borderColor:'#10b981',borderWidth:1},
+      {label:'ALT', data:bAlt, backgroundColor:'rgba(59,130,246,.65)', borderColor:'#3b82f6',borderWidth:1},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
+      plugins:{legend:{labels:{boxWidth:10,font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw} modelos`}}},
+      scales:{
+        x:{ticks:{font:{size:9}},grid:{color:'#334155'}},
+        y:{ticks:{font:{size:9}},grid:{color:'#334155'},title:{display:true,text:'Nº modelos',color:'#94a3b8',font:{size:9}}}
+      }
+    }
+  });
+
+  // ── N_INPUTS × MÉDIA PERS ─────────────────────────
+  const byNi={};
+  [...conv,...alt].forEach(r=>{
+    if(r.n_inputs==null)return;
+    if(!byNi[r.n_inputs])byNi[r.n_inputs]={c:[],a:[]};
+    (r.tipo==='CONV'?byNi[r.n_inputs].c:byNi[r.n_inputs].a).push(r.PERS_teste);
+  });
+  const niKeys=Object.keys(byNi).map(Number).sort((a,b)=>a-b);
+  const niAvgC=niKeys.map(k=>avg(byNi[k].c)??null);
+  const niAvgA=niKeys.map(k=>avg(byNi[k].a)??null);
+  if(CH['c-ins-inp'])CH['c-ins-inp'].destroy();
+  CH['c-ins-inp']=new Chart(document.getElementById('c-ins-inp'),{
+    type:'bar',
+    data:{labels:niKeys.map(k=>`${k}`),datasets:[
+      {label:'CONV (média)',data:niAvgC,backgroundColor:'rgba(16,185,129,.6)',borderColor:'#10b981',borderWidth:1},
+      {label:'ALT (média)', data:niAvgA, backgroundColor:'rgba(59,130,246,.6)', borderColor:'#3b82f6',borderWidth:1},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
+      plugins:{legend:{labels:{boxWidth:10,font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw!=null?ctx.raw.toFixed(3):'—'}`}}},
+      scales:{
+        x:{title:{display:true,text:'Nº Inputs',color:'#94a3b8',font:{size:9}},ticks:{font:{size:9}},grid:{color:'#334155'}},
+        y:{title:{display:true,text:'PERS médio',color:'#94a3b8',font:{size:9}},ticks:{font:{size:9}},grid:{color:'#334155'}}
+      }
+    }
+  });
+
+  // ── ANÁLISE: o que funcionou / o que trabalhar ────
+  const g70c=conv.filter(r=>r.PERS_teste>=.7).length;
+  const g70a=alt .filter(r=>r.PERS_teste>=.7).length;
+  const gapConv=conv.filter(r=>r.PERS_treino!=null&&r.PERS_treino>-2).map(r=>r.PERS_treino-r.PERS_teste);
+  const gapAlt =alt .filter(r=>r.PERS_treino!=null&&r.PERS_treino>-2).map(r=>r.PERS_treino-r.PERS_teste);
+  const medGapC=gapConv.length?[...gapConv].sort((a,b)=>a-b)[Math.floor(gapConv.length/2)]:null;
+  const medGapA=gapAlt.length?[...gapAlt].sort((a,b)=>a-b)[Math.floor(gapAlt.length/2)]:null;
+  const avgConv=avg(conv.map(r=>r.PERS_teste));
+  const avgAlt =avg(alt .map(r=>r.PERS_teste));
+
+  function item(color,title,note){
+    return`<div class="ins-item"><div class="ins-dot" style="background:${color}"></div><div><b>${title}</b>${note?`<span class="im">${note}</span>`:''}</div></div>`;
+  }
+  const worked=`<div class="ins-box">
+    <h4 class="gn">✅ O que mais funcionou</h4>
+    ${item('#22c55e','ALT generaliza melhor que CONV',`Gap mediano treino→teste: ALT ${medGapA?.toFixed(2)??'—'} vs CONV ${medGapC?.toFixed(2)??'—'}`)}
+    ${item('#22c55e','Arquiteturas menores têm média mais alta','n_inputs 4–6 apresentam PERS médio superior (~0.38–0.45 vs negativo para n≥13)')}
+    ${item('#22c55e','Picos absolutos vêm de n_inputs 11–13','Melhor CONV: 11 inputs / 22 nh · Melhor ALT: 13 inputs / 26 nh')}
+    ${item('#22c55e','R6 CONV atingiu desempenho recorde','PERS_teste máx 0.826 vs 0.618 da R5 — nova série de dados valeu')}
+    ${item('#22c55e','MAE do melhor ALT (A0371) é excelente',`${bestAlt?.MAE_teste!=null?bestAlt.MAE_teste.toFixed(1)+' cm — menor que o melhor CONV ('+bestConv?.MAE_teste?.toFixed(1)+' cm)':''}`)}
+  </div>`;
+
+  const todo=`<div class="ins-box">
+    <h4 class="yn">🔧 O que pode ser mais trabalhado</h4>
+    ${item('#f59e0b','Alta variância entre rotações','Mesma arquitetura R6_M09 varia de −6 a +0.82 só pela divisão dos dados → cross-validation ajudaria')}
+    ${item('#f59e0b','Overfitting generalizado',`CONV: mediana do gap treino-teste ${medGapC?.toFixed(2)??'—'} · Regularização (L2 / dropout) pode ajudar`)}
+    ${item('#f59e0b',`Apenas ${pct(g70c,conv.length)} CONV e ${pct(g70a,alt.length)} ALT atingem PERS ≥ 0.70`,'Margem enorme de melhoria: mais de mil modelos ficam abaixo desse limiar')}
+    ${item('#f59e0b','Janela temporal dos inputs (P) pouco explorada','R6 testou poucos valores de P — variar mais pode revelar configurações melhores')}
+    ${item('#f59e0b','Selecionar arquitetura com base nos resultados','Focar próxima rodada em n_inputs 11–13, nh 22–26, com mais rotações')}
+  </div>`;
+  document.getElementById('ins-learn').innerHTML=worked+todo;
+}
 
 function fill(id,vals){const el=document.getElementById(id);el.innerHTML='<option value="">Todos</option>'+vals.map(v=>`<option>${v}</option>`).join('');}
 
