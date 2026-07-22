@@ -529,7 +529,7 @@ function upStats(){
   const wq=rs.filter(r=>r.score_equilibrio!=null);
   const bestQ=[...wq].sort((a,b)=>b.score_equilibrio-a.score_equilibrio)[0];
   const cv=rs.filter(r=>r.tipo==='CONV'),alt=rs.filter(r=>r.tipo==='ALT');
-  const hyd=RAW.filter(r=>PRED_IDX.has(r.modelo)).length;
+  const hyd=RAW.filter(r=>r.tem_previsao||PRED_IDX.has(r.modelo)).length;
   set('s0',rs.length);set('s0b',`${cv.length} CONV · ${alt.length} ALT`);
   set('s1',f4(best?.PERS_teste));set('s1b',best?`${best.combo_id} (${best.tipo})`:'—');
   set('s2',f4(avgT));set('s2b',`CONV: ${f4(av(cv.filter(r=>r.PERS_teste!=null),'PERS_teste'))} · ALT: ${f4(av(alt.filter(r=>r.PERS_teste!=null),'PERS_teste'))}`);
@@ -586,7 +586,7 @@ function rt(){
   const start=pg*ps,page=FLT.slice(start,start+ps);
   const bestT=Math.max(...FLT.map(r=>r.PERS_teste??-Infinity));
   document.getElementById('tbody').innerHTML=page.map((r,i)=>{
-    const rank=start+i+1,isB=r.PERS_teste===bestT,hasP=PRED_IDX.has(r.modelo);
+    const rank=start+i+1,isB=r.PERS_teste===bestT,hasP=r.tem_previsao||PRED_IDX.has(r.modelo);
     return `<tr class="${r.tipo==='CONV'?'cv':''}" onclick="showDetail('${encodeURIComponent(r.modelo)}',this)">
       <td class="mu2">${rank}</td><td><span class="tag tag-${r.tipo.toLowerCase()}">${r.tipo}</span></td>
       <td class="fw" title="${r.modelo}">${r.combo_id||r.modelo.slice(-16)}${isB?'<span class="bst">TOP</span>':''}${hasP?'<span class="dot-f" title="hidrograma disponível"></span>':''}</td>
@@ -646,7 +646,7 @@ async function fetchPreds(mn){
       result=vals;
     }
     PRED_IDX.set(mn,result);
-    const shyd=document.getElementById('s-hyd');if(shyd)shyd.textContent=PRED_IDX.size;
+    const shyd=document.getElementById('s-hyd');if(shyd)shyd.textContent=RAW.filter(r=>r.tem_previsao||PRED_IDX.has(r.modelo)).length;
     return result;
   }catch(e){FETCH_ERR[mn]={url,status:'ERR',msg:String(e)};return null;}
 }
