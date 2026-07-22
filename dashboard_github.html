@@ -744,20 +744,25 @@ function buildHydroHtml(r, parts, preds){
     return `<div class="dp-sec"><h4>🌊 Hidrogramas</h4><div class="no-data">Dados de partição não disponíveis.</div></div>`;
   }
 
-  // Gerar botões para cada evento, agrupados por fase
+  // Gerar botões — um por evento (sem duplicatas entre fases)
   const phMeta=[
     {key:'treino',label:'TR',color:'#f59e0b'},
     {key:'val',   label:'VL',color:'#3b82f6'},
     {key:'teste', label:'TE',color:'#10b981'},
   ];
+  const allEvs=new Map(); // ev → fase dominante (fase com mais pontos)
+  phMeta.forEach(ph=>{
+    parts[ph.key].events.forEach((pts,ev)=>{
+      if(!allEvs.has(ev)||pts.length>allEvs.get(ev).n)
+        allEvs.set(ev,{n:pts.length,ph});
+    });
+  });
+  const sortedEvs=[...allEvs.keys()].sort((a,b)=>a-b);
   let first=true;
-  const btns=phMeta.map(ph=>{
-    const evs=[...parts[ph.key].events.keys()].sort((a,b)=>a-b);
-    return evs.map(ev=>{
-      const btn=`<button class="ev-btn${first?' active':''}" id="evbtn-${ev}" onclick="selectEvent(${ev})">Ev ${ev} <span class="phase-badge" style="background:${ph.color}">${ph.label}</span></button>`;
-      first=false;
-      return btn;
-    }).join('');
+  const btns=sortedEvs.map(ev=>{
+    const {ph}=allEvs.get(ev);
+    const btn=`<button class="ev-btn${first?' active':''}" id="evbtn-${ev}" onclick="selectEvent(${ev})">Ev ${ev} <span class="phase-badge" style="background:${ph.color}">${ph.label}</span></button>`;
+    first=false;return btn;
   }).join('');
 
   return `<div class="dp-sec"><h4>🌊 Hidrogramas — por Evento</h4>
@@ -777,7 +782,7 @@ let _curParts=null, _curTipo=null, _evMeta=null;
 
 function initHydroCharts(parts, tipo){
   _curParts=parts; _curTipo=tipo;
-  // Montar mapa global de eventos: ev → {phaseLabel, phColor, data[]}
+  // Montar mapa global: ev → dados de TODAS as fases merged (evita perda de pontos em fronteiras)
   _evMeta=new Map();
   const phMeta=[
     {key:'treino',label:'Treino',   color:'#f59e0b'},
@@ -785,12 +790,13 @@ function initHydroCharts(parts, tipo){
     {key:'teste', label:'Teste',    color:'#10b981'},
   ];
   phMeta.forEach(ph=>{
-    [...parts[ph.key].events.keys()].sort((a,b)=>a-b).forEach(ev=>{
-      _evMeta.set(ev,{label:ph.label,phColor:ph.color,data:parts[ph.key].events.get(ev)});
+    parts[ph.key].events.forEach((pts,ev)=>{
+      if(!_evMeta.has(ev)) _evMeta.set(ev,{label:ph.label,phColor:ph.color,data:[]});
+      _evMeta.get(ev).data.push(...pts);
     });
   });
   // Renderiza primeiro evento
-  const firstEv=[..._evMeta.keys()][0];
+  const firstEv=[..._evMeta.keys()].sort((a,b)=>a-b)[0];
   if(firstEv!=null) selectEvent(firstEv);
 }
 
