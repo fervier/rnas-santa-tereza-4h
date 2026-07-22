@@ -705,7 +705,7 @@ async function showDetail(enc,trEl){
   let preds=null,obs=null;
   if(fetchResult){
     if(fetchResult.isRich){preds=fetchResult.preds;obs=fetchResult.obsArr;}
-    else{preds=fetchResult;obs=r.obs_key?OBS[r.obs_key]:null;}
+    else{preds=fetchResult;obs=(r.obs_key&&OBS[r.obs_key])||OBS['R5_R7']||null;}
   }
   let parts=null;
   if(preds&&obs&&r.N_treino){
