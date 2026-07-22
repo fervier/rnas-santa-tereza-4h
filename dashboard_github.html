@@ -266,6 +266,7 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
     <option value="spread_pers_a">↑ Spread</option>
     <option value="MAE_teste_a">↑ MAE Teste</option>
     <option value="peak_mae_pct_a">↑ Menor Erro de Pico</option>
+    <option value="CE_teste_d">↓ CE Teste (maior)</option>
     <option value="combo_id_a">A-Z Combo</option>
   </select>
 </div>
@@ -335,7 +336,8 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
         <th onclick="sc2('MAE_val')">MAE Val↕</th>
         <th onclick="sc2('MAE_teste')">MAE Teste↕</th>
         <th onclick="sc2('E95_teste')">E95↕</th>
-        <th onclick="sc2('peak_mae_pct')" title="Erro relativo médio no pico do evento (%)">Pico%↕</th>
+        <th onclick="sc2('CE_teste')" title="Coeficiente de Extrapolação — Teste">CE Teste↕</th>
+        <th onclick="sc2('peak_mae_pct')" title="Erro relativo médio no pico do evento — só conjunto Teste (%)">Pico%↕</th>
         <th onclick="sc2('peak_bias_cm')" title="Viés médio no pico (cm)">Viés Pico↕</th>
         <th>nh</th><th>inp</th><th>🌊</th>
       </tr></thead>
@@ -755,6 +757,7 @@ function rt(){
       <td>${r.score_equilibrio!=null?`<span class="${r.score_equilibrio>0.35?'g':r.score_equilibrio>0.2?'m':'b'}">${f4(r.score_equilibrio)}</span>`:'—'}</td>
       <td>${r.MAE_val!=null?f2(r.MAE_val):'—'}</td><td>${r.MAE_teste!=null?f2(r.MAE_teste):'—'}</td>
       <td>${r.E95_teste!=null?r.E95_teste.toFixed(1):'—'}</td>
+      <td>${r.CE_teste!=null?`<span class="${r.CE_teste>0.4?'g':r.CE_teste>0.2?'m':'b'}">${r.CE_teste.toFixed(3)}</span>`:'<span style="color:var(--br)">—</span>'}</td>
       <td>${r.peak_mae_pct!=null?`<span class="${r.peak_mae_pct<5?'g':r.peak_mae_pct<12?'m':'b'}">${r.peak_mae_pct.toFixed(1)}%</span>`:'<span style="color:var(--br)">—</span>'}</td>
       <td>${r.peak_bias_cm!=null?`<span class="${Math.abs(r.peak_bias_cm)<20?'g':Math.abs(r.peak_bias_cm)<50?'m':'b'}">${r.peak_bias_cm>0?'+':''}${r.peak_bias_cm.toFixed(0)}cm</span>`:'<span style="color:var(--br)">—</span>'}</td>
       <td class="mu2">${r.neuronios}</td><td class="mu2">${r.n_inputs}</td>
