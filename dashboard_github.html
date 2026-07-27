@@ -587,6 +587,7 @@ async function init(){
     fill('sel-nh',[...new Set(RAW.map(r=>r.neuronios))].sort((a,b)=>+a-+b));
     fill('sel-ni',[...new Set(RAW.map(r=>r.n_inputs))].sort((a,b)=>+a-+b));
     af();
+    prePopulatePeakCache();
     const hdrCnt=document.getElementById('hdr-cnt');if(hdrCnt)hdrCnt.textContent=`${RAW.length} modelos`;
     const hdrSrc=document.getElementById('hdr-src');if(hdrSrc)hdrSrc.textContent=`· ${c.user}/${c.repo}`;
     if(ghStatus)ghStatus.textContent=`✓ ${RAW.length} modelos — ${c.user}/${c.repo}`;
@@ -651,6 +652,7 @@ async function loadExcel(evt){
     fill('sel-nh',[...new Set(RAW.map(r=>r.neuronios))].sort((a,b)=>+a-+b));
     fill('sel-ni',[...new Set(RAW.map(r=>r.n_inputs))].sort((a,b)=>+a-+b));
     af();
+    prePopulatePeakCache();
     stat.textContent=`✓ ${nd.length} modelos de "${file.name}"`;stat.className='ustat ok';
     document.querySelector('.up-card').classList.add('ok-xlsx');
   }catch(e){stat.textContent=`⚠ Erro: ${e.message}`;stat.className='ustat warn';}
@@ -1101,6 +1103,19 @@ function renderScatterPlots(parts,tipo){
 // PEAK SCATTER — gráficos globais de pico (acumulam conforme modelos abertos)
 // ════════════════════════════════════════════════════
 const PEAK_CACHE=new Map(); // mn → {pers, erroPico, vies, tipo, label}
+
+// Pré-popula PEAK_CACHE a partir dos campos pré-computados no JSON
+function prePopulatePeakCache(){
+  PEAK_CACHE.clear();
+  let n=0;
+  for(const r of RAW){
+    if(r.erroPico_teste==null||r.vies_pico_teste==null||r.PERS_teste==null) continue;
+    const mn=r.mat_nome||r.modelo;
+    PEAK_CACHE.set(mn,{pers:r.PERS_teste,erroPico:r.erroPico_teste,vies:r.vies_pico_teste,tipo:r.tipo,label:mn});
+    n++;
+  }
+  if(n>0) _renderPeakScatter();
+}
 
 function updatePeakCharts(mn,peakStats,r){
   const testeStats=peakStats.filter(p=>p.fase==='TE'&&p.err!=null);
