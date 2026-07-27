@@ -166,6 +166,17 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 .upload-hint{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:6px;padding:10px 12px;font-size:.73rem;color:var(--mu);text-align:center;margin-bottom:10px}
 .upload-hint strong{color:var(--tx)}
 
+/* ── Peak classification ── */
+.pk-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:6px;margin-bottom:10px}
+.pk-card{background:var(--s2);border-radius:5px;padding:6px 8px;text-align:center}
+.pk-card .pk-label{font-size:.58rem;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+.pk-card .pk-val{font-size:.9rem;font-weight:700}
+.pk-card .pk-sub{font-size:.56rem;color:var(--mu);margin-top:1px}
+.pk-table{width:100%;border-collapse:collapse;font-size:.67rem;margin-top:8px}
+.pk-table th{background:var(--s2);color:var(--mu);padding:4px 5px;text-align:left;font-weight:600;font-size:.58rem;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.pk-table td{padding:3px 5px;border-bottom:1px solid var(--br);white-space:nowrap}
+.pk-table tbody tr:hover{background:var(--s2)}
+
 @media(max-width:1100px){.cg3,.sg{grid-template-columns:1fr 1fr}.up-row{grid-template-columns:1fr}}
 @media(max-width:700px){.cg2,.cg3,.sg,.cg2x,.up-row{grid-template-columns:1fr}main{padding:10px}}
 
@@ -1001,6 +1012,10 @@ async function _renderDetailPanel(r){
       </div>
     </div>
 
+    <div class="dp-sec" id="dp-pico-sec" style="display:none">
+      <!-- preenchido por renderPeakSection() após carregar previsões -->
+    </div>
+
     <div class="dp-sec"><h4>Arquivos</h4>
       ${ghBtn('Modelo MATLAB (.mat)','🧠',matUrl,mn+'.mat')}
       ${ghBtn('Previsões (.csv)','📈',csvUrl,mn+'_previsoes.csv')}
@@ -1032,7 +1047,7 @@ async function _renderDetailPanel(r){
   }
   const hydroSec=document.getElementById('dp-hydro-sec');
   if(hydroSec)hydroSec.outerHTML=buildHydroHtml(r,parts,preds);
-  if(parts){initHydroCharts(parts,r.tipo);renderScatterPlots(parts,r.tipo);}
+  if(parts){initHydroCharts(parts,r.tipo);renderScatterPlots(parts,r.tipo);renderPeakSection(computePeakStats(parts));}
 }
 
 function renderScatterPlots(parts,tipo){
@@ -1064,6 +1079,94 @@ function renderScatterPlots(parts,tipo){
       }
     });
   });
+}
+
+// ════════════════════════════════════════════════════
+// PEAK CLASSIFICATION — desempenho nos picos de cheia
+// ════════════════════════════════════════════════════
+function computePeakStats(parts){
+  const results=[];
+  const phList=[
+    {key:'treino',label:'TR',color:'#f59e0b'},
+    {key:'val',   label:'VL',color:'#3b82f6'},
+    {key:'teste', label:'TE',color:'#10b981'},
+  ];
+  for(const ph of phList){
+    for(const [ev,pts] of parts[ph.key].events){
+      const f=pts.filter(x=>x.obs!=null&&x.pred!=null);
+      if(!f.length) continue;
+      let piObs=0; f.forEach((x,i)=>{if(x.obs>f[piObs].obs)piObs=i;});
+      let piPred=0; f.forEach((x,i)=>{if(x.pred>f[piPred].pred)piPred=i;});
+      const pkObs=f[piObs].obs, pkPred=f[piPred].pred;
+      const err=pkObs>0?Math.abs(pkPred-pkObs)/pkObs*100:null;
+      const vies=pkPred-pkObs;
+      const timing=(piPred-piObs)*4; // cada passo = 4 h
+      let cls='—',clr='#64748b';
+      if(err!=null){
+        if(err<5)       {cls='Excelente';clr='#10a97c';}
+        else if(err<15) {cls='Bom';      clr='#22c55e';}
+        else if(err<30) {cls='Regular';  clr='#f59e0b';}
+        else            {cls='Ruim';     clr='#ef4444';}
+      }
+      results.push({ev,fase:ph.label,phColor:ph.color,pkObs,pkPred,err,vies,timing,cls,clr});
+    }
+  }
+  return results.sort((a,b)=>a.ev-b.ev);
+}
+
+function renderPeakSection(peakStats){
+  const el=document.getElementById('dp-pico-sec');
+  if(!el) return;
+  const valid=peakStats.filter(p=>p.err!=null);
+  if(!valid.length){el.style.display='none';return;}
+  el.style.display='block';
+
+  const avgErr=valid.reduce((s,p)=>s+p.err,0)/valid.length;
+  const avgVies=valid.reduce((s,p)=>s+p.vies,0)/valid.length;
+  const cnt={Excelente:0,Bom:0,Regular:0,Ruim:0};
+  valid.forEach(p=>{if(cnt[p.cls]!=null)cnt[p.cls]++;});
+
+  const card=(lbl,val,sub,cor='')=>
+    `<div class="pk-card"><div class="pk-label">${lbl}</div><div class="pk-val"${cor?` style="color:${cor}"`:''}>${val}</div><div class="pk-sub">${sub}</div></div>`;
+
+  const vClrAvg=avgVies>5?'#ef4444':avgVies<-5?'#3b82f6':'#10a97c';
+  const vLbl=avgVies>5?'superestima':avgVies<-5?'subestima':'neutro';
+  const cards=[
+    card('Erro médio',avgErr.toFixed(1)+'%','pico prev vs obs'),
+    card('Viés médio',(avgVies>0?'+':'')+avgVies.toFixed(1)+' cm',vLbl,vClrAvg),
+    card('Excelente',cnt.Excelente,'<5%','#10a97c'),
+    card('Bom',cnt.Bom,'5–15%','#22c55e'),
+    card('Regular',cnt.Regular,'15–30%','#f59e0b'),
+    card('Ruim',cnt.Ruim,'≥30%','#ef4444'),
+  ].join('');
+
+  const rows=peakStats.map(p=>{
+    const vClr=Math.abs(p.vies)>30?'#f59e0b':'#94a3b8';
+    const tClr=p.timing===0?'#10a97c':Math.abs(p.timing)<=8?'#f59e0b':'#ef4444';
+    const tLbl=p.timing>0?`+${p.timing}h (antec.)`:p.timing<0?`${p.timing}h (atras.)`:'0h (acerto)';
+    return`<tr>
+      <td>Ev ${p.ev}</td>
+      <td><span class="phase-badge" style="background:${p.phColor}">${p.fase}</span></td>
+      <td>${p.pkObs.toFixed(1)} cm</td>
+      <td>${p.pkPred.toFixed(1)} cm</td>
+      <td style="color:${p.clr};font-weight:700">${p.err!=null?p.err.toFixed(1)+'%':'—'}</td>
+      <td style="color:${vClr}">${p.vies>0?'+':''}${p.vies.toFixed(1)} cm</td>
+      <td style="color:${tClr}">${tLbl}</td>
+      <td style="color:${p.clr};font-weight:700">${p.cls}</td>
+    </tr>`;
+  }).join('');
+
+  el.innerHTML=`
+    <h4>🎯 Desempenho nos Picos de Cheia</h4>
+    <div class="pk-summary">${cards}</div>
+    <table class="pk-table">
+      <thead><tr><th>Evento</th><th>Fase</th><th>Pico obs</th><th>Pico prev</th><th>Erro %</th><th>Viés</th><th>Timing</th><th>Classif.</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:.6rem;color:#475569;margin-top:5px">
+      Timing: positivo = RNA antecipou o pico; negativo = atrasou. Viés = prev − obs no pico.
+      Classificação: Excelente &lt;5% · Bom 5–15% · Regular 15–30% · Ruim ≥30%.
+    </div>`;
 }
 
 // ════════════════════════════════════════════════════
