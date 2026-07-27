@@ -428,6 +428,16 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
   <div class="cc"><h3>Score Equilíbrio × PERS Teste</h3><div class="cw"><canvas id="c-eq"></canvas></div></div>
   <div class="cc"><h3>MAE Teste × PERS Teste</h3><div class="cw"><canvas id="c-mae"></canvas></div></div>
 </div>
+<div class="cg2">
+  <div class="cc">
+    <h3>Erro de Pico (%) × PERS Teste <span id="pk-sc-cnt" style="font-weight:400;font-size:.6rem;color:var(--mu)">— abra modelos para carregar</span></h3>
+    <div class="cw"><canvas id="c-pico-sc"></canvas></div>
+  </div>
+  <div class="cc">
+    <h3>Viés de Pico (cm) × PERS Teste <span id="pk-vies-cnt" style="font-weight:400;font-size:.6rem;color:var(--mu)"></span></h3>
+    <div class="cw"><canvas id="c-pico-vies"></canvas></div>
+  </div>
+</div>
 
 <div class="tc">
   <div class="th2">
@@ -1047,7 +1057,13 @@ async function _renderDetailPanel(r){
   }
   const hydroSec=document.getElementById('dp-hydro-sec');
   if(hydroSec)hydroSec.outerHTML=buildHydroHtml(r,parts,preds);
-  if(parts){initHydroCharts(parts,r.tipo);renderScatterPlots(parts,r.tipo);renderPeakSection(computePeakStats(parts));}
+  if(parts){
+    initHydroCharts(parts,r.tipo);
+    renderScatterPlots(parts,r.tipo);
+    const ps=computePeakStats(parts);
+    renderPeakSection(ps);
+    updatePeakCharts(mn,ps,r);
+  }
 }
 
 function renderScatterPlots(parts,tipo){
@@ -1079,6 +1095,56 @@ function renderScatterPlots(parts,tipo){
       }
     });
   });
+}
+
+// ════════════════════════════════════════════════════
+// PEAK SCATTER — gráficos globais de pico (acumulam conforme modelos abertos)
+// ════════════════════════════════════════════════════
+const PEAK_CACHE=new Map(); // mn → {pers, erroPico, vies, tipo, label}
+
+function updatePeakCharts(mn,peakStats,r){
+  const testeStats=peakStats.filter(p=>p.fase==='TE'&&p.err!=null);
+  if(!testeStats.length) return;
+  const avgErr=testeStats.reduce((s,p)=>s+p.err,0)/testeStats.length;
+  const avgVies=testeStats.reduce((s,p)=>s+p.vies,0)/testeStats.length;
+  PEAK_CACHE.set(mn,{pers:r.PERS_teste,erroPico:+avgErr.toFixed(2),vies:+avgVies.toFixed(1),tipo:r.tipo,label:mn});
+  _renderPeakScatter();
+}
+
+function _renderPeakScatter(){
+  const conv={sc:[],vies:[]},alt={sc:[],vies:[]};
+  PEAK_CACHE.forEach(({pers,erroPico,vies,tipo,label})=>{
+    const pt={x:pers,y:erroPico,label};
+    const pv={x:pers,y:vies,label};
+    if(tipo==='CONV'){conv.sc.push(pt);conv.vies.push(pv);}
+    else{alt.sc.push(pt);alt.vies.push(pv);}
+  });
+  const n=PEAK_CACHE.size;
+  const cntEl=document.getElementById('pk-sc-cnt');
+  const cntEl2=document.getElementById('pk-vies-cnt');
+  if(cntEl) cntEl.textContent=`(${n} modelo${n!==1?'s':''} carregado${n!==1?'s':''})`;
+  if(cntEl2) cntEl2.textContent=`(${n} carregado${n!==1?'s':''})`;
+
+  const tip=ctx=>`${ctx.raw.label}\nPERS: ${ctx.raw.x?.toFixed(3)}  Valor: ${ctx.raw.y?.toFixed(1)}`;
+  const mk=(id,yLabel,yMin)=>{
+    const cv=document.getElementById(id);if(!cv)return;
+    if(CH[id]){CH[id].destroy();delete CH[id];}
+    CH[id]=new Chart(cv,{type:'scatter',data:{datasets:[
+      {label:'CONV',data:conv[id==='c-pico-sc'?'sc':'vies'],backgroundColor:'rgba(16,185,129,.55)',pointRadius:3.5,pointHoverRadius:5},
+      {label:'ALT', data:alt[id==='c-pico-sc'?'sc':'vies'], backgroundColor:'rgba(59,130,246,.55)',pointRadius:3.5,pointHoverRadius:5},
+    ]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
+      plugins:{legend:{labels:{boxWidth:8,font:{size:9},color:'#94a3b8'}},
+        tooltip:{callbacks:{label:tip}}},
+      scales:{
+        x:{title:{display:true,text:'PERS Teste',color:'#64748b',font:{size:8}},
+           ticks:{color:'#94a3b8',font:{size:8},maxTicksLimit:6},grid:{color:'#1e3422'}},
+        y:{title:{display:true,text:yLabel,color:'#64748b',font:{size:8}},min:yMin,
+           ticks:{color:'#94a3b8',font:{size:8},maxTicksLimit:6},grid:{color:'#1e3422'}}
+      }
+    }});
+  };
+  mk('c-pico-sc','Erro pico (%)',0);
+  mk('c-pico-vies','Viés pico (cm)',undefined);
 }
 
 // ════════════════════════════════════════════════════
