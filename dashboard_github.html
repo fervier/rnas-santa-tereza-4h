@@ -1159,6 +1159,9 @@ function renderPeakSection(peakStats){
   el.innerHTML=`
     <h4>🎯 Desempenho nos Picos de Cheia</h4>
     <div class="pk-summary">${cards}</div>
+    <div style="position:relative;height:210px;margin:10px 0 4px">
+      <canvas id="pk-chart"></canvas>
+    </div>
     <table class="pk-table">
       <thead><tr><th>Evento</th><th>Fase</th><th>Pico obs</th><th>Pico prev</th><th>Erro %</th><th>Viés</th><th>Timing</th><th>Classif.</th></tr></thead>
       <tbody>${rows}</tbody>
@@ -1167,6 +1170,53 @@ function renderPeakSection(peakStats){
       Timing: positivo = RNA antecipou o pico; negativo = atrasou. Viés = prev − obs no pico.
       Classificação: Excelente &lt;5% · Bom 5–15% · Regular 15–30% · Ruim ≥30%.
     </div>`;
+
+  // Gráfico: barras obs vs prev + linha de erro %
+  const pkCanvas=document.getElementById('pk-chart');
+  if(pkCanvas){
+    if(CH['pk-chart']){CH['pk-chart'].destroy();delete CH['pk-chart'];}
+    const labels=peakStats.map(p=>`Ev ${p.ev}`);
+    const barColorsObs=peakStats.map(p=>`${p.phColor}99`);
+    const barColorsPrev=peakStats.map(p=>p.clr+'cc');
+    CH['pk-chart']=new Chart(pkCanvas,{
+      data:{
+        labels,
+        datasets:[
+          {type:'bar',label:'Pico obs (cm)',data:peakStats.map(p=>p.pkObs),
+           backgroundColor:barColorsObs,borderColor:peakStats.map(p=>p.phColor),borderWidth:1,
+           yAxisID:'y',order:2},
+          {type:'bar',label:'Pico prev (cm)',data:peakStats.map(p=>p.pkPred),
+           backgroundColor:barColorsPrev,borderColor:peakStats.map(p=>p.clr),borderWidth:1.5,
+           yAxisID:'y',order:3},
+          {type:'line',label:'Erro % pico',data:peakStats.map(p=>p.err!=null?+p.err.toFixed(1):null),
+           borderColor:'#f8fafc',backgroundColor:'rgba(248,250,252,.15)',
+           borderWidth:1.5,pointRadius:3,pointBackgroundColor:peakStats.map(p=>p.clr),
+           tension:.3,yAxisID:'y2',order:1},
+        ]
+      },
+      options:{
+        responsive:true,maintainAspectRatio:false,animation:{duration:0},
+        interaction:{mode:'index',intersect:false},
+        plugins:{
+          legend:{labels:{boxWidth:9,font:{size:9},color:'#94a3b8'}},
+          tooltip:{callbacks:{
+            label:ctx=>{
+              if(ctx.dataset.yAxisID==='y2') return ` Erro: ${ctx.raw}%`;
+              return ` ${ctx.dataset.label.includes('obs')?'Obs':'Prev'}: ${ctx.raw?.toFixed(1)} cm`;
+            }
+          }}
+        },
+        scales:{
+          x:{ticks:{color:'#94a3b8',font:{size:8}},grid:{color:'#1e3422'}},
+          y:{position:'left',title:{display:true,text:'Nível (cm)',color:'#64748b',font:{size:8}},
+             ticks:{color:'#94a3b8',font:{size:8}},grid:{color:'#1e3422'}},
+          y2:{position:'right',title:{display:true,text:'Erro %',color:'#64748b',font:{size:8}},
+              ticks:{color:'#94a3b8',font:{size:8}},grid:{display:false},
+              min:0}
+        }
+      }
+    });
+  }
 }
 
 // ════════════════════════════════════════════════════
