@@ -429,6 +429,13 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
   <div class="cc"><h3>MAE Teste × PERS Teste</h3><div class="cw"><canvas id="c-mae"></canvas></div></div>
 </div>
 <div class="cg2">
+  <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:2px 0 4px;font-size:.7rem;color:#94a3b8">
+    <span style="white-space:nowrap">Pico mín. no teste:</span>
+    <input type="range" id="pk-min-pico" min="0" max="600" step="25" value="0"
+           style="flex:1;accent-color:#3b82f6;cursor:pointer"
+           oninput="document.getElementById('pk-min-pico-val').textContent=this.value==0?'todos':this.value+' cm';_renderPeakScatter()">
+    <span id="pk-min-pico-val" style="min-width:44px;text-align:right">todos</span>
+  </div>
   <div class="cc">
     <h3>Erro de Pico (%) × PERS Teste <span id="pk-sc-cnt" style="font-weight:400;font-size:.6rem;color:var(--mu)">— abra modelos para carregar</span></h3>
     <div class="cw"><canvas id="c-pico-sc"></canvas></div>
@@ -437,6 +444,7 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
     <h3>Viés de Pico (cm) × PERS Teste <span id="pk-vies-cnt" style="font-weight:400;font-size:.6rem;color:var(--mu)"></span></h3>
     <div class="cw"><canvas id="c-pico-vies"></canvas></div>
   </div>
+  <div id="pk-pico-legend" style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;font-size:.67rem;color:#94a3b8;padding-top:2px;align-items:center"></div>
 </div>
 
 <div class="tc">
@@ -1111,7 +1119,8 @@ function prePopulatePeakCache(){
   for(const r of RAW){
     if(r.erroPico_teste==null||r.vies_pico_teste==null||r.PERS_teste==null) continue;
     const mn=r.mat_nome||r.modelo;
-    PEAK_CACHE.set(mn,{pers:r.PERS_teste,erroPico:r.erroPico_teste,vies:r.vies_pico_teste,tipo:r.tipo,label:mn});
+    PEAK_CACHE.set(mn,{pers:r.PERS_teste,erroPico:r.erroPico_teste,vies:r.vies_pico_teste,
+      tipo:r.tipo,label:mn,picoObsMax:r.pico_obs_max_teste??null,nEventos:r.n_eventos_teste??null});
     n++;
   }
   if(n>0) _renderPeakScatter();
@@ -1122,33 +1131,69 @@ function updatePeakCharts(mn,peakStats,r){
   if(!testeStats.length) return;
   const avgErr=testeStats.reduce((s,p)=>s+p.err,0)/testeStats.length;
   const avgVies=testeStats.reduce((s,p)=>s+p.vies,0)/testeStats.length;
-  PEAK_CACHE.set(mn,{pers:r.PERS_teste,erroPico:+avgErr.toFixed(2),vies:+avgVies.toFixed(1),tipo:r.tipo,label:mn});
+  const picoObsMax=+Math.max(...testeStats.map(p=>p.pkObs)).toFixed(1);
+  const nEventos=new Set(testeStats.map(p=>p.ev)).size;
+  PEAK_CACHE.set(mn,{pers:r.PERS_teste,erroPico:+avgErr.toFixed(2),vies:+avgVies.toFixed(1),
+    tipo:r.tipo,label:mn,picoObsMax,nEventos});
   _renderPeakScatter();
 }
 
+// Bandas de cor por magnitude do pico observado no teste
+const PICO_BANDS=[
+  {lim:100, clr:'rgba(148,163,184,.8)', label:'< 100 cm'},
+  {lim:200, clr:'rgba(59,130,246,.8)',  label:'100–200 cm'},
+  {lim:300, clr:'rgba(16,185,129,.8)',  label:'200–300 cm'},
+  {lim:400, clr:'rgba(245,158,11,.8)',  label:'300–400 cm'},
+  {lim:Infinity,clr:'rgba(239,68,68,.8)',label:'≥ 400 cm'},
+];
+function _picoColor(p){
+  if(p==null) return 'rgba(148,163,184,.5)';
+  for(const b of PICO_BANDS) if(p<b.lim) return b.clr;
+  return PICO_BANDS[PICO_BANDS.length-1].clr;
+}
+
 function _renderPeakScatter(){
-  const conv={sc:[],vies:[]},alt={sc:[],vies:[]};
-  PEAK_CACHE.forEach(({pers,erroPico,vies,tipo,label})=>{
-    const pt={x:pers,y:erroPico,label};
-    const pv={x:pers,y:vies,label};
-    if(tipo==='CONV'){conv.sc.push(pt);conv.vies.push(pv);}
-    else{alt.sc.push(pt);alt.vies.push(pv);}
+  const minPico=+(document.getElementById('pk-min-pico')?.value||0);
+
+  // Acumular pontos por tipo, com cor individual por magnitude
+  const conv={sc:[],vies:[],sc_c:[],vies_c:[]};
+  const alt ={sc:[],vies:[],sc_c:[],vies_c:[]};
+  let nVis=0;
+
+  PEAK_CACHE.forEach(({pers,erroPico,vies,tipo,label,picoObsMax,nEventos})=>{
+    if(minPico>0 && (picoObsMax==null||picoObsMax<minPico)) return;
+    nVis++;
+    const clr=_picoColor(picoObsMax);
+    const picoStr=picoObsMax!=null?` | pico obs: ${picoObsMax} cm`:'';
+    const evStr=nEventos!=null?` | ev: ${nEventos}`:'';
+    const pt={x:pers,y:erroPico,label,_tip:`${label}${picoStr}${evStr}`};
+    const pv={x:pers,y:vies,   label,_tip:`${label}${picoStr}${evStr}`};
+    if(tipo==='CONV'){conv.sc.push(pt);conv.sc_c.push(clr);conv.vies.push(pv);conv.vies_c.push(clr);}
+    else             {alt.sc.push(pt); alt.sc_c.push(clr); alt.vies.push(pv); alt.vies_c.push(clr);}
   });
-  const n=PEAK_CACHE.size;
+
   const cntEl=document.getElementById('pk-sc-cnt');
   const cntEl2=document.getElementById('pk-vies-cnt');
-  if(cntEl) cntEl.textContent=`(${n} modelo${n!==1?'s':''} carregado${n!==1?'s':''})`;
-  if(cntEl2) cntEl2.textContent=`(${n} carregado${n!==1?'s':''})`;
+  const sfx=`(${nVis} modelo${nVis!==1?'s':''})`;
+  if(cntEl)  cntEl.textContent=sfx;
+  if(cntEl2) cntEl2.textContent=sfx;
 
-  const tip=ctx=>`${ctx.raw.label}\nPERS: ${ctx.raw.x?.toFixed(3)}  Valor: ${ctx.raw.y?.toFixed(1)}`;
+  const tip=ctx=>{const r=ctx.raw;return r._tip||`${r.label}\nPERS: ${r.x?.toFixed(3)}  Valor: ${r.y?.toFixed(1)}`;};
+
   const mk=(id,yLabel,yMin)=>{
     const cv=document.getElementById(id);if(!cv)return;
     if(CH[id]){CH[id].destroy();delete CH[id];}
+    const isErr=id==='c-pico-sc';
     CH[id]=new Chart(cv,{type:'scatter',data:{datasets:[
-      {label:'CONV',data:conv[id==='c-pico-sc'?'sc':'vies'],backgroundColor:'rgba(16,185,129,.55)',pointRadius:3.5,pointHoverRadius:5},
-      {label:'ALT', data:alt[id==='c-pico-sc'?'sc':'vies'], backgroundColor:'rgba(59,130,246,.55)',pointRadius:3.5,pointHoverRadius:5},
+      {label:'CONV',data:isErr?conv.sc:conv.vies,
+       backgroundColor:isErr?conv.sc_c:conv.vies_c,
+       pointRadius:3.5,pointHoverRadius:5,pointStyle:'circle'},
+      {label:'ALT', data:isErr?alt.sc:alt.vies,
+       backgroundColor:isErr?alt.sc_c:alt.vies_c,
+       pointRadius:3.5,pointHoverRadius:5,pointStyle:'triangle'},
     ]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
-      plugins:{legend:{labels:{boxWidth:8,font:{size:9},color:'#94a3b8'}},
+      plugins:{
+        legend:{labels:{boxWidth:8,font:{size:9},color:'#94a3b8',usePointStyle:true}},
         tooltip:{callbacks:{label:tip}}},
       scales:{
         x:{title:{display:true,text:'PERS Teste',color:'#64748b',font:{size:8}},
@@ -1160,6 +1205,19 @@ function _renderPeakScatter(){
   };
   mk('c-pico-sc','Erro pico (%)',0);
   mk('c-pico-vies','Viés pico (cm)',undefined);
+
+  // Legenda de cores
+  const leg=document.getElementById('pk-pico-legend');
+  if(leg){
+    const items=PICO_BANDS.map(b=>
+      `<span style="display:flex;align-items:center;gap:3px">
+         <span style="width:9px;height:9px;border-radius:50%;background:${b.clr};display:inline-block;flex-shrink:0"></span>
+         ${b.label}
+       </span>`
+    );
+    items.push(`<span style="margin-left:8px;border-left:1px solid #334155;padding-left:8px">● CONV &nbsp; ▲ ALT</span>`);
+    leg.innerHTML=items.join('');
+  }
 }
 
 // ════════════════════════════════════════════════════
