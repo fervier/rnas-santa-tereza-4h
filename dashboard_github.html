@@ -1138,21 +1138,39 @@ function updatePeakCharts(mn,peakStats,r){
   _renderPeakScatter();
 }
 
-// Bandas de cor por magnitude do pico observado no teste
-const PICO_BANDS=[
-  {lim:100, clr:'rgba(148,163,184,.8)', label:'< 100 cm'},
-  {lim:200, clr:'rgba(59,130,246,.8)',  label:'100–200 cm'},
-  {lim:300, clr:'rgba(16,185,129,.8)',  label:'200–300 cm'},
-  {lim:400, clr:'rgba(245,158,11,.8)',  label:'300–400 cm'},
-  {lim:Infinity,clr:'rgba(239,68,68,.8)',label:'≥ 400 cm'},
-];
+// Bandas de cor calculadas dinamicamente a partir dos dados do cache
+const _BAND_CLRS=['rgba(148,163,184,.8)','rgba(59,130,246,.8)','rgba(16,185,129,.8)','rgba(245,158,11,.8)','rgba(239,68,68,.8)'];
+let _PICO_BANDS=[];  // preenchido em _renderPeakScatter
 function _picoColor(p){
-  if(p==null) return 'rgba(148,163,184,.5)';
-  for(const b of PICO_BANDS) if(p<b.lim) return b.clr;
-  return PICO_BANDS[PICO_BANDS.length-1].clr;
+  if(p==null||!_PICO_BANDS.length) return 'rgba(148,163,184,.5)';
+  for(const b of _PICO_BANDS) if(p<b.lim) return b.clr;
+  return _PICO_BANDS[_PICO_BANDS.length-1].clr;
 }
 
 function _renderPeakScatter(){
+  // Calcular bandas dinâmicas por percentis dos valores reais
+  const allPicos=[];
+  PEAK_CACHE.forEach(e=>{if(e.picoObsMax!=null)allPicos.push(e.picoObsMax);});
+  if(allPicos.length>=5){
+    allPicos.sort((a,b)=>a-b);
+    const q=p=>allPicos[Math.min(Math.floor(p*(allPicos.length-1)),allPicos.length-1)];
+    const cuts=[q(.2),q(.4),q(.6),q(.8)].map(Math.round);
+    _PICO_BANDS=[
+      {lim:cuts[0], clr:_BAND_CLRS[0], label:`< ${cuts[0]} cm`},
+      {lim:cuts[1], clr:_BAND_CLRS[1], label:`${cuts[0]}–${cuts[1]} cm`},
+      {lim:cuts[2], clr:_BAND_CLRS[2], label:`${cuts[1]}–${cuts[2]} cm`},
+      {lim:cuts[3], clr:_BAND_CLRS[3], label:`${cuts[2]}–${cuts[3]} cm`},
+      {lim:Infinity,clr:_BAND_CLRS[4], label:`≥ ${cuts[3]} cm`},
+    ];
+    // Ajustar slider ao range real
+    const sliderEl=document.getElementById('pk-min-pico');
+    if(sliderEl){
+      const maxP=allPicos[allPicos.length-1];
+      const sliderMax=Math.ceil(maxP/100)*100;
+      sliderEl.max=sliderMax;
+      sliderEl.step=Math.max(25,Math.round(sliderMax/20/25)*25);
+    }
+  }
   const minPico=+(document.getElementById('pk-min-pico')?.value||0);
 
   // Acumular pontos por tipo, com cor individual por magnitude
