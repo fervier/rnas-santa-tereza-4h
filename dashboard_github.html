@@ -6,34 +6,24 @@
 <title>Dashboard 4h — RNAs Santa Tereza</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <style>
 :root{
-  /* ALT = azul | CONV = verde */
-  --alt:#3b82f6;--altA:rgba(59,130,246,.48);
-  --conv:#10b981;--convA:rgba(16,185,129,.48);
-  --obs:#fbbf24;--obsA:rgba(251,191,36,.8);
+  --alt:#3b82f6;--altA:rgba(59,130,246,.55);
+  --conv:#10b981;--convA:rgba(16,185,129,.55);
+  --obs:#f59e0b;--obsA:rgba(245,158,11,.8);
   --pred-c:#10b981;--pred-a:#3b82f6;
-  /* Paleta de fundo verde-escura (combina com o verde da bacia) */
-  --bg:#0b1710;--s1:#0f2014;--s2:#172c1c;--s3:#1f3c26;
-  --tx:#f0fdf4;--mu:#7ea882;--br:#1e3422;
-  --good:#4ade80;--mid:#fbbf24;--bad:#f87171;
-  /* Degradê da marca: verde → amarelo → laranja → vermelho */
-  --brand-green:#4a8c3a;--brand-yellow:#c8be3a;
-  --brand-orange:#d27828;--brand-red:#c03830;
+  --bg:#0f172a;--s1:#1e293b;--s2:#334155;--s3:#475569;
+  --tx:#f1f5f9;--mu:#94a3b8;--br:#334155;
+  --good:#22c55e;--mid:#f59e0b;--bad:#ef4444;
   --pw:min(860px,92vw);
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--tx);font-family:'Segoe UI',system-ui,sans-serif}
 
 /* Header */
-header{background:var(--s1);border-bottom:none;padding:12px 22px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
-header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand-green) 0%,var(--brand-yellow) 40%,var(--brand-orange) 70%,var(--brand-red) 100%)}
-header h1{font-size:.95rem;font-weight:600;color:var(--tx)}
-header p{color:var(--mu);font-size:.72rem}
-.brand-name{font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;background:linear-gradient(90deg,var(--brand-green),var(--brand-yellow),var(--brand-orange),var(--brand-red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2px}
-.brand-basin{flex-shrink:0}
+header{background:var(--s1);border-bottom:1px solid var(--br);padding:12px 22px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+header h1{font-size:1.05rem;font-weight:600}
+header p{color:var(--mu);font-size:.76rem}
 .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.67rem;font-weight:700}
 .tag-alt{background:rgba(59,130,246,.18);color:var(--alt);border:1px solid rgba(59,130,246,.3)}
 .tag-conv{background:rgba(16,185,129,.18);color:var(--conv);border:1px solid rgba(16,185,129,.3)}
@@ -121,6 +111,28 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 .pg button{background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:2px 8px;border-radius:4px;cursor:pointer;font-size:.7rem}
 .pg button:disabled{opacity:.35;cursor:default}
 
+/* ═══ INSIGHTS ═══ */
+.ins-sec{background:var(--s1);border:1px solid var(--br);border-radius:8px;padding:16px 18px;margin-bottom:14px}
+.ins-hdr{font-size:.68rem;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--br);display:flex;align-items:center;gap:8px}
+.ins-hdr strong{color:var(--tx);font-size:.82rem;font-weight:700;text-transform:none;letter-spacing:0}
+.ins-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.ins-card{background:var(--bg);border:1px solid var(--br);border-radius:7px;padding:12px 14px;border-top:3px solid var(--br)}
+.ins-card.cv{border-top-color:var(--conv)}.ins-card.alt{border-top-color:var(--alt)}.ins-card.eq{border-top-color:#f59e0b}
+.ins-card .icl{font-size:.59rem;color:var(--mu);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.ins-card .icn{font-size:.84rem;font-weight:700;margin-bottom:7px}
+.ins-card .ics{display:flex;flex-wrap:wrap;gap:5px}
+.ins-card .ics span{background:var(--s1);border:1px solid var(--br);border-radius:4px;padding:2px 7px;font-size:.68rem;color:var(--mu)}
+.ins-card .ics span b{color:var(--tx)}
+.ins-charts{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.ins-learn{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ins-box{background:var(--bg);border:1px solid var(--br);border-radius:7px;padding:14px}
+.ins-box h4{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.ins-box h4.gn{color:#22c55e}.ins-box h4.yn{color:#f59e0b}
+.ins-item{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;font-size:.72rem;line-height:1.5;color:var(--tx)}
+.ins-item:last-child{margin-bottom:0}
+.ins-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.ins-item .im{color:var(--mu);font-size:.66rem;display:block;margin-top:2px}
+
 /* ═══ DETAIL PANEL ═══ */
 #dp{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);width:var(--pw);max-height:92vh;background:var(--s1);border:1px solid var(--br);border-radius:14px;z-index:200;overflow-y:auto;transition:transform .25s cubic-bezier(.4,0,.2,1),opacity .25s;display:flex;flex-direction:column;opacity:0;pointer-events:none;box-shadow:0 24px 60px rgba(0,0,0,.6)}
 #dp.open{transform:translate(-50%,-50%) scale(1);opacity:1;pointer-events:auto}
@@ -166,17 +178,6 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 .upload-hint{background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:6px;padding:10px 12px;font-size:.73rem;color:var(--mu);text-align:center;margin-bottom:10px}
 .upload-hint strong{color:var(--tx)}
 
-/* ── Peak classification ── */
-.pk-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(76px,1fr));gap:6px;margin-bottom:10px}
-.pk-card{background:var(--s2);border-radius:5px;padding:6px 8px;text-align:center}
-.pk-card .pk-label{font-size:.58rem;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
-.pk-card .pk-val{font-size:.9rem;font-weight:700}
-.pk-card .pk-sub{font-size:.56rem;color:var(--mu);margin-top:1px}
-.pk-table{width:100%;border-collapse:collapse;font-size:.67rem;margin-top:8px}
-.pk-table th{background:var(--s2);color:var(--mu);padding:4px 5px;text-align:left;font-weight:600;font-size:.58rem;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
-.pk-table td{padding:3px 5px;border-bottom:1px solid var(--br);white-space:nowrap}
-.pk-table tbody tr:hover{background:var(--s2)}
-
 @media(max-width:1100px){.cg3,.sg{grid-template-columns:1fr 1fr}.up-row{grid-template-columns:1fr}}
 @media(max-width:700px){.cg2,.cg3,.sg,.cg2x,.up-row{grid-template-columns:1fr}main{padding:10px}}
 
@@ -185,7 +186,7 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 #gh-bar details>summary{display:inline;list-style:none}
 #gh-bar details>summary::-webkit-details-marker{display:none}
 /* Loading overlay */
-#loading-overlay{position:fixed;inset:0;background:rgba(11,23,16,.88);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+#loading-overlay{position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
 #loading-overlay.hidden{display:none}
 .spin{width:36px;height:36px;border:3px solid var(--s2);border-top-color:var(--alt);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -195,96 +196,14 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
 /* Detail panel loading */
 .preds-loading{color:var(--mu);font-size:.75rem;text-align:center;padding:20px;display:flex;align-items:center;justify-content:center;gap:8px}
 .spin-sm{width:16px;height:16px;border:2px solid var(--s2);border-top-color:var(--alt);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
-
-/* ─── VISTA FAMÍLIAS ─── */
-.view-seg{display:flex;gap:0;background:var(--s2);border-radius:7px;padding:2px;margin-right:8px;flex-shrink:0}
-.view-btn{background:none;border:none;color:var(--mu);padding:4px 12px;border-radius:5px;font-size:.73rem;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
-.view-btn.active{background:var(--s1);color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.4)}
-.mbar{display:flex;gap:3px;align-items:center;flex-wrap:wrap}
-.mtab{background:var(--s2);border:1px solid var(--br);color:var(--mu);padding:3px 10px;border-radius:5px;font-size:.71rem;cursor:pointer;transition:.15s;white-space:nowrap}
-.mtab.active{background:var(--alt);border-color:var(--alt);color:#0b1710}
-#fam-view{display:none;margin-bottom:14px}
-.fam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
-.fam-card{background:var(--s1);border:1px solid var(--br);border-radius:10px;overflow:hidden}
-.fam-card-hdr{padding:11px 14px;border-bottom:1px solid var(--br);display:flex;align-items:flex-start;justify-content:space-between;gap:6px}
-.fam-card-hdr h4{font-size:.8rem;font-weight:700;margin:0;color:var(--tx)}
-.fam-subtitle{font-size:.64rem;color:var(--mu);margin-top:1px}
-.fam-cnt{font-size:.64rem;color:var(--mu);white-space:nowrap;flex-shrink:0}
-.fam-body{padding:8px 12px 10px}
-.fam-item{display:flex;align-items:center;gap:7px;padding:5px 4px;border-radius:5px;cursor:pointer;transition:.12s}
-.fam-item:hover{background:rgba(255,255,255,.05)}
-.fam-rank{width:14px;font-size:.63rem;color:var(--mu);text-align:right;flex-shrink:0}
-.fam-info{flex:1;min-width:0}
-.fam-name{font-size:.72rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fam-mae{font-size:.61rem;color:var(--mu)}
-.fam-right{flex-shrink:0;text-align:right}
-.fam-val{font-size:.82rem;font-weight:700}
-.fam-bar-wrap{height:3px;border-radius:2px;background:var(--s3);overflow:hidden;margin-top:3px;width:42px}
-.fam-bar-fill{height:100%;border-radius:2px}
-/* ─── DETAIL PANEL — tags ─── */
-.dp-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
-.dp-tag{border-radius:999px;padding:2px 10px;font-size:.65rem;font-weight:600}
-.dp-tag.t-tipo{background:rgba(74,222,128,.12);color:#4ade80;border:1px solid rgba(74,222,128,.3)}
-.dp-tag.t-conv{background:rgba(16,185,129,.12);color:#10b981;border:1px solid rgba(16,185,129,.3)}
-.dp-tag.t-rot{background:rgba(192,132,252,.12);color:#c084fc;border:1px solid rgba(192,132,252,.3)}
-.dp-tag.t-info{background:var(--s2);color:var(--mu);border:1px solid var(--br)}
-/* ─── DETAIL PANEL — PERS barras horizontais ─── */
-.hbar-wrap{margin:4px 0 8px}
-.hbar-row{display:grid;grid-template-columns:68px 1fr 50px;align-items:center;gap:7px;margin-bottom:5px}
-.hbar-label{font-size:.69rem;color:var(--mu);text-align:right}
-.hbar-track{height:14px;background:var(--s2);border-radius:3px;overflow:hidden}
-.hbar-fill{height:100%;border-radius:3px;transition:width .4s}
-.hbar-val{font-size:.74rem;font-weight:700}
-/* ─── DETAIL PANEL — erro grid ─── */
-.err-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:6px 0 10px}
-.err-cell{background:var(--s2);border-radius:6px;padding:7px 9px;text-align:center}
-.err-cell .el{font-size:.6rem;color:var(--mu);margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em}
-.err-cell .ev{font-size:.9rem;font-weight:700}
-/* ─── DETAIL PANEL — scatter ─── */
-.scatter-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-.scatter-cw{position:relative;height:170px}
-.scatter-lbl{font-size:.67rem;color:var(--mu);margin-bottom:3px}
-/* ═══ SEÇÃO A BACIA ═══ */
-#sec-bacia{background:#f5f2ec;color:#1a1a1a;padding:36px 28px 28px}
-.bacia-pill{display:inline-block;background:rgba(74,140,58,.15);color:#3d7a2e;border:1px solid rgba(74,140,58,.35);border-radius:999px;font-size:.68rem;font-weight:700;letter-spacing:.1em;padding:3px 12px;margin-bottom:14px}
-#sec-bacia h2{font-size:1.45rem;font-weight:700;color:#111;margin-bottom:8px}
-#sec-bacia .bacia-sub{font-size:.82rem;color:#555;max-width:680px;line-height:1.55;margin-bottom:20px}
-.bacia-layout{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
-#mapa-leaflet{height:400px;border-radius:10px;overflow:hidden;border:1px solid #ddd;z-index:0}
-.bacia-cards{display:flex;flex-direction:column;gap:8px;max-height:400px;overflow-y:auto}
-.bacia-card{background:#fff;border:1px solid #e0ddd6;border-radius:8px;padding:10px 13px;cursor:default;transition:.15s;display:flex;align-items:flex-start;gap:10px}
-.bacia-card:hover{border-color:#b0cba8;background:#f8fff6}
-.bacia-card-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px}
-.bacia-card-info{flex:1}
-.bacia-card-nome{font-size:.82rem;font-weight:700;color:#111;margin-bottom:1px}
-.bacia-card-desc{font-size:.71rem;color:#666;line-height:1.4}
-.bacia-card-transl{display:inline-block;margin-top:4px;font-size:.66rem;font-weight:600;background:rgba(74,140,58,.12);color:#3d7a2e;border-radius:4px;padding:1px 6px}
-.bacia-card-cod{font-size:.62rem;color:#999;margin-top:2px}
-.bacia-note{font-size:.68rem;color:#888;margin-top:14px;line-height:1.5;border-top:1px solid #ddd;padding-top:10px}
-.bacia-note a{color:#3d7a2e}
-@media(max-width:850px){.bacia-layout{grid-template-columns:1fr}#mapa-leaflet{height:300px}.bacia-cards{max-height:250px}}
 </style>
 </head>
 <body>
 
-<header style="position:relative">
-  <!-- Logo Previne Taquari-Antas (PNG se disponível, SVG como fallback) -->
-  <img id="logo-img" src="logo_previne.png" alt="Previne Taquari-Antas" height="46"
-       style="flex-shrink:0;image-rendering:crisp-edges"
-       onerror="this.style.display='none';document.getElementById('logo-svg').style.display='block'">
-  <svg id="logo-svg" style="display:none;flex-shrink:0" viewBox="0 0 64 72" width="38" height="43">
-    <defs>
-      <linearGradient id="baciag" x1="0%" y1="100%" x2="100%" y2="0%">
-        <stop offset="0%" stop-color="#4a8c3a"/><stop offset="35%" stop-color="#c8be3a"/>
-        <stop offset="65%" stop-color="#d27828"/><stop offset="100%" stop-color="#c03830"/>
-      </linearGradient>
-    </defs>
-    <path d="M18,68 L6,54 L4,38 L10,24 L8,12 L18,4 L32,6 L46,10 L58,22 L60,38 L54,54 L44,64 L30,70 Z" fill="url(#baciag)"/>
-  </svg>
+<header>
   <div>
-    <div class="brand-name">Previne Taquari-Antas</div>
-    <h1>RNAs Santa Tereza — 4h</h1>
-    <p>Bacia Protegida, Comunidade Segura · ALT × CONV</p>
+    <h1>🌊 RNAs Santa Tereza — 4h</h1>
+    <p>Previne Taquari-Antas · ALT × CONV</p>
   </div>
   <div style="margin-left:auto;display:flex;gap:5px;align-items:center">
     <span class="tag tag-alt">ALT</span>
@@ -308,7 +227,6 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
         <label style="color:var(--mu)">Branch:</label>
         <input id="gh-branch" style="background:var(--s2);border:1px solid var(--br);color:var(--tx);padding:3px 7px;border-radius:5px;font-size:.74rem;width:80px" placeholder="main">
         <button onclick="saveGHConfig()" style="background:var(--alt);border:none;color:#fff;padding:3px 10px;border-radius:5px;font-size:.72rem;cursor:pointer">Salvar &amp; recarregar</button>
-        <button onclick="resetGHConfig()" style="background:var(--s3);border:1px solid var(--br);color:var(--mu);padding:3px 8px;border-radius:5px;font-size:.72rem;cursor:pointer" title="Volta para fervier/rnas-santa-tereza-4h">↺ Resetar padrão</button>
         <span style="color:var(--mu);font-size:.68rem">ou:</span>
         <label style="cursor:pointer;display:flex;align-items:center;gap:5px;background:var(--s2);border:1px solid var(--br);border-radius:5px;padding:3px 9px;font-size:.72rem">
           <span>📊 Atualizar métricas (XLSX)</span>
@@ -320,49 +238,8 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════
-     SEÇÃO: A BACIA — mapa interativo das estações
-════════════════════════════════════════════════ -->
-<section id="sec-bacia">
-  <div><span class="bacia-pill">A BACIA</span></div>
-  <h2>Onde ficam as estações</h2>
-  <p class="bacia-sub">A estação-alvo em Santa Tereza, a estação de montante e as estações de apoio usadas nas rodadas de modelagem. O tempo de translação estimado indica quando uma alteração no nível de cada estação chega a Santa Tereza.</p>
-  <div class="bacia-layout">
-    <div id="mapa-leaflet"></div>
-    <div class="bacia-cards" id="bacia-cards-list"></div>
-  </div>
-  <div class="bacia-note">
-    Marcadores sólidos: posição confirmada no registro da ANA/SGB.
-    Dados de nível: estações fluviométricas da rede ANA/SGB —
-    séries históricas no <a href="https://www.snirh.gov.br/hidroweb/" target="_blank">HidroWeb</a> ·
-    telemetria em tempo real no <a href="https://telemetriaws1.ana.gov.br/" target="_blank">Sistema Telemetria ANA</a>.
-    ⚠ Tempos de translação são estimativas; valores exatos dependem da magnitude do evento.
-  </div>
-</section>
-
 <div class="layout">
 <main id="main-area">
-
-<!-- Seletor de vista + abas de métrica (para vista Famílias) -->
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
-  <div class="view-seg">
-    <button class="view-btn active" id="vbtn-tab" onclick="toggleView('tabela')">Tabela</button>
-    <button class="view-btn"        id="vbtn-fam" onclick="toggleView('familias')">Desempenho por família</button>
-  </div>
-  <div class="mbar" id="mbar-wrap" style="display:none">
-    <span style="font-size:.7rem;color:var(--mu)">Métrica:</span>
-    <button class="mtab active" onclick="setMetric('media_pers',this)">Geral</button>
-    <button class="mtab"        onclick="setMetric('PERS_treino',this)">Treino</button>
-    <button class="mtab"        onclick="setMetric('PERS_validacao',this)">Validação</button>
-    <button class="mtab"        onclick="setMetric('PERS_teste',this)">Teste</button>
-    <button class="mtab"        onclick="setMetric('score_equilibrio',this)">Equilíbrio</button>
-  </div>
-</div>
-
-<!-- Vista Famílias -->
-<div id="fam-view">
-  <div id="fam-grid" class="fam-grid"></div>
-</div>
 
 <div class="fbar">
   <label>Tipo:</label>
@@ -388,6 +265,8 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
     <option value="score_equilibrio_d">↓ Score Equil.</option>
     <option value="spread_pers_a">↑ Spread</option>
     <option value="MAE_teste_a">↑ MAE Teste</option>
+    <option value="peak_mae_pct_a">↑ Menor Erro de Pico</option>
+    <option value="CE_teste_d">↓ CE Teste (maior)</option>
     <option value="combo_id_a">A-Z Combo</option>
   </select>
 </div>
@@ -428,23 +307,15 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
   <div class="cc"><h3>Score Equilíbrio × PERS Teste</h3><div class="cw"><canvas id="c-eq"></canvas></div></div>
   <div class="cc"><h3>MAE Teste × PERS Teste</h3><div class="cw"><canvas id="c-mae"></canvas></div></div>
 </div>
-<div class="cg2">
-  <div style="grid-column:1/-1;display:flex;align-items:center;gap:10px;padding:2px 0 4px;font-size:.7rem;color:#94a3b8">
-    <span style="white-space:nowrap">Pico mín. no teste:</span>
-    <input type="range" id="pk-min-pico" min="0" max="600" step="25" value="0"
-           style="flex:1;accent-color:#3b82f6;cursor:pointer"
-           oninput="document.getElementById('pk-min-pico-val').textContent=this.value==0?'todos':this.value+' cm';_renderPeakScatter()">
-    <span id="pk-min-pico-val" style="min-width:44px;text-align:right">todos</span>
+
+<div class="ins-sec" id="ins-sec" style="display:none">
+  <div class="ins-hdr">🔍 &nbsp;O que aprendemos com <strong id="ins-tot">—</strong></div>
+  <div class="ins-cards" id="ins-cards"></div>
+  <div class="ins-charts">
+    <div class="cc"><h3>Distribuição PERS Teste — CONV vs ALT</h3><div class="cw"><canvas id="c-ins-dist"></canvas></div></div>
+    <div class="cc"><h3>N° de Inputs × Média PERS Teste</h3><div class="cw"><canvas id="c-ins-inp"></canvas></div></div>
   </div>
-  <div class="cc">
-    <h3>Erro de Pico (%) × PERS Teste <span id="pk-sc-cnt" style="font-weight:400;font-size:.6rem;color:var(--mu)">— abra modelos para carregar</span></h3>
-    <div class="cw"><canvas id="c-pico-sc"></canvas></div>
-  </div>
-  <div class="cc">
-    <h3>Viés de Pico (cm) × PERS Teste <span id="pk-vies-cnt" style="font-weight:400;font-size:.6rem;color:var(--mu)"></span></h3>
-    <div class="cw"><canvas id="c-pico-vies"></canvas></div>
-  </div>
-  <div id="pk-pico-legend" style="grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap;font-size:.67rem;color:#94a3b8;padding-top:2px;align-items:center"></div>
+  <div class="ins-learn" id="ins-learn"></div>
 </div>
 
 <div class="tc">
@@ -465,6 +336,9 @@ tr.sel.cv td{background:rgba(16,185,129,.08)!important;border-left:2px solid var
         <th onclick="sc2('MAE_val')">MAE Val↕</th>
         <th onclick="sc2('MAE_teste')">MAE Teste↕</th>
         <th onclick="sc2('E95_teste')">E95↕</th>
+        <th onclick="sc2('CE_teste')" title="Coeficiente de Extrapolação — Teste">CE Teste↕</th>
+        <th onclick="sc2('peak_mae_pct')" title="Erro relativo médio no pico do evento — só conjunto Teste (%)">Pico%↕</th>
+        <th onclick="sc2('peak_bias_cm')" title="Viés médio no pico (cm)">Viés Pico↕</th>
         <th>nh</th><th>inp</th><th>🌊</th>
       </tr></thead>
       <tbody id="tbody"></tbody>
@@ -510,12 +384,8 @@ const GH_DEFAULTS={user:'fervier',repo:'rnas-santa-tereza-4h',branch:'main'};
 
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
-function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
 function ghCfg(){
-  // Valida: se o valor salvo for um placeholder, ignora
-  const placeholders=['seu_usuario_github','seu-usuario',''];
-  const raw_u=lsGet('gh_user')||'';
-  const u=placeholders.includes(raw_u.trim())?GH_DEFAULTS.user:raw_u.trim()||GH_DEFAULTS.user;
+  const u=lsGet('gh_user')||GH_DEFAULTS.user;
   const r=lsGet('gh_repo')||GH_DEFAULTS.repo;
   const b=lsGet('gh_branch')||GH_DEFAULTS.branch;
   return{user:u,repo:r,branch:b,base:`https://raw.githubusercontent.com/${u}/${r}/${b}`};
@@ -526,10 +396,6 @@ function saveGHConfig(){
   const b=document.getElementById('gh-branch').value.trim();
   if(!u||!r||!b){alert('Preencha todos os campos.');return;}
   lsSet('gh_user',u);lsSet('gh_repo',r);lsSet('gh_branch',b);
-  PRED_IDX.clear();init();
-}
-function resetGHConfig(){
-  lsDel('gh_user');lsDel('gh_repo');lsDel('gh_branch');
   PRED_IDX.clear();init();
 }
 function fillGHInputs(){
@@ -595,15 +461,14 @@ async function init(){
     fill('sel-nh',[...new Set(RAW.map(r=>r.neuronios))].sort((a,b)=>+a-+b));
     fill('sel-ni',[...new Set(RAW.map(r=>r.n_inputs))].sort((a,b)=>+a-+b));
     af();
-    prePopulatePeakCache();
     const hdrCnt=document.getElementById('hdr-cnt');if(hdrCnt)hdrCnt.textContent=`${RAW.length} modelos`;
     const hdrSrc=document.getElementById('hdr-src');if(hdrSrc)hdrSrc.textContent=`· ${c.user}/${c.repo}`;
     if(ghStatus)ghStatus.textContent=`✓ ${RAW.length} modelos — ${c.user}/${c.repo}`;
     showLoading(false);
+    buildInsights();
     // AUTO-TESTE: verifica se fetch de CSV funciona (diagnóstico)
     try{
-      const testR=(RAW.find(x=>x.obs_key==='R5_R7'&&x.tem_previsao))||null;
-      const testMn=testR&&(testR.mat_nome||testR.modelo);
+      const testMn=(RAW.find(x=>x.obs_key==='R5_R7')||{}).modelo;
       if(testMn){
         const enc2=encodeURIComponent(testMn);
         const testUrl=`${c.base}/modelos/${enc2}/${enc2}_previsoes.csv`;
@@ -620,6 +485,129 @@ async function init(){
 }
 async function reloadGH(){PRED_IDX.clear();await init();}
 window.addEventListener('load',init);
+
+// ════════════════════════════════════════════════════
+// INSIGHTS — lê RAW e monta seção analítica
+// ════════════════════════════════════════════════════
+function buildInsights(){
+  const sec=document.getElementById('ins-sec');
+  if(!sec||!RAW.length)return;
+  sec.style.display='';
+
+  const conv=RAW.filter(r=>r.tipo==='CONV'&&r.PERS_teste!=null);
+  const alt =RAW.filter(r=>r.tipo==='ALT' &&r.PERS_teste!=null);
+  const avg=arr=>arr.length?arr.reduce((s,v)=>s+v,0)/arr.length:null;
+  const pct=(n,tot)=>tot?((n/tot)*100).toFixed(1)+'%':'—';
+
+  document.getElementById('ins-tot').textContent=
+    `${RAW.length} modelos (${conv.length} CONV · ${alt.length} ALT)`;
+
+  // ── TOP MODEL CARDS ──────────────────────────────
+  const bestConv=[...conv].sort((a,b)=>b.PERS_teste-a.PERS_teste)[0];
+  const bestAlt =[...alt ].sort((a,b)=>b.PERS_teste-a.PERS_teste)[0];
+  const bestEq  =[...conv].filter(r=>r.score_equilibrio!=null&&r.PERS_validacao>0)
+                          .sort((a,b)=>b.score_equilibrio-a.score_equilibrio)[0];
+  function card(cls,lbl,m){
+    if(!m)return'';
+    const f=v=>v!=null?v.toFixed(4):'—';
+    return`<div class="ins-card ${cls}">
+      <div class="icl">${lbl}</div>
+      <div class="icn">${m.combo_id||m.modelo.slice(-18)}</div>
+      <div class="ics">
+        <span><b>${f(m.PERS_treino)}</b><br><span style="font-size:.6rem">Treino</span></span>
+        <span><b>${f(m.PERS_validacao)}</b><br><span style="font-size:.6rem">Val</span></span>
+        <span><b>${f(m.PERS_teste)}</b><br><span style="font-size:.6rem">Teste</span></span>
+        ${m.MAE_teste!=null?`<span><b>${m.MAE_teste.toFixed(1)} cm</b><br><span style="font-size:.6rem">MAE</span></span>`:''}
+        ${m.n_inputs!=null?`<span><b>${m.n_inputs} inp / ${m.neuronios||'?'} nh</b><br><span style="font-size:.6rem">Arq.</span></span>`:''}
+      </div>
+    </div>`;
+  }
+  document.getElementById('ins-cards').innerHTML=
+    card('cv','🟢 Melhor CONV — PERS Teste',bestConv)+
+    card('alt','🔵 Melhor ALT — PERS Teste',bestAlt)+
+    card('eq','🟡 Melhor CONV Equilibrado',bestEq);
+
+  // ── DISTRIBUIÇÃO PERS_teste ───────────────────────
+  const buckets=[[-9,0,'< 0'],[0,.5,'0 – 0.5'],[.5,.65,'0.5 – 0.65'],[.65,.75,'0.65 – 0.75'],[.75,.8,'0.75 – 0.80'],[.8,2,'≥ 0.80']];
+  const bLabels=buckets.map(b=>b[2]);
+  const bConv=buckets.map(([lo,hi])=>conv.filter(r=>r.PERS_teste>=lo&&r.PERS_teste<hi).length);
+  const bAlt =buckets.map(([lo,hi])=>alt .filter(r=>r.PERS_teste>=lo&&r.PERS_teste<hi).length);
+  if(CH['c-ins-dist'])CH['c-ins-dist'].destroy();
+  CH['c-ins-dist']=new Chart(document.getElementById('c-ins-dist'),{
+    type:'bar',
+    data:{labels:bLabels,datasets:[
+      {label:'CONV',data:bConv,backgroundColor:'rgba(16,185,129,.65)',borderColor:'#10b981',borderWidth:1},
+      {label:'ALT', data:bAlt, backgroundColor:'rgba(59,130,246,.65)', borderColor:'#3b82f6',borderWidth:1},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
+      plugins:{legend:{labels:{boxWidth:10,font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw} modelos`}}},
+      scales:{
+        x:{ticks:{font:{size:9}},grid:{color:'#334155'}},
+        y:{ticks:{font:{size:9}},grid:{color:'#334155'},title:{display:true,text:'Nº modelos',color:'#94a3b8',font:{size:9}}}
+      }
+    }
+  });
+
+  // ── N_INPUTS × MÉDIA PERS ─────────────────────────
+  const byNi={};
+  [...conv,...alt].forEach(r=>{
+    if(r.n_inputs==null)return;
+    if(!byNi[r.n_inputs])byNi[r.n_inputs]={c:[],a:[]};
+    (r.tipo==='CONV'?byNi[r.n_inputs].c:byNi[r.n_inputs].a).push(r.PERS_teste);
+  });
+  const niKeys=Object.keys(byNi).map(Number).sort((a,b)=>a-b);
+  const niAvgC=niKeys.map(k=>avg(byNi[k].c)??null);
+  const niAvgA=niKeys.map(k=>avg(byNi[k].a)??null);
+  if(CH['c-ins-inp'])CH['c-ins-inp'].destroy();
+  CH['c-ins-inp']=new Chart(document.getElementById('c-ins-inp'),{
+    type:'bar',
+    data:{labels:niKeys.map(k=>`${k}`),datasets:[
+      {label:'CONV (média)',data:niAvgC,backgroundColor:'rgba(16,185,129,.6)',borderColor:'#10b981',borderWidth:1},
+      {label:'ALT (média)', data:niAvgA, backgroundColor:'rgba(59,130,246,.6)', borderColor:'#3b82f6',borderWidth:1},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
+      plugins:{legend:{labels:{boxWidth:10,font:{size:10}}},
+        tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw!=null?ctx.raw.toFixed(3):'—'}`}}},
+      scales:{
+        x:{title:{display:true,text:'Nº Inputs',color:'#94a3b8',font:{size:9}},ticks:{font:{size:9}},grid:{color:'#334155'}},
+        y:{title:{display:true,text:'PERS médio',color:'#94a3b8',font:{size:9}},ticks:{font:{size:9}},grid:{color:'#334155'}}
+      }
+    }
+  });
+
+  // ── ANÁLISE: o que funcionou / o que trabalhar ────
+  const g70c=conv.filter(r=>r.PERS_teste>=.7).length;
+  const g70a=alt .filter(r=>r.PERS_teste>=.7).length;
+  const gapConv=conv.filter(r=>r.PERS_treino!=null&&r.PERS_treino>-2).map(r=>r.PERS_treino-r.PERS_teste);
+  const gapAlt =alt .filter(r=>r.PERS_treino!=null&&r.PERS_treino>-2).map(r=>r.PERS_treino-r.PERS_teste);
+  const medGapC=gapConv.length?[...gapConv].sort((a,b)=>a-b)[Math.floor(gapConv.length/2)]:null;
+  const medGapA=gapAlt.length?[...gapAlt].sort((a,b)=>a-b)[Math.floor(gapAlt.length/2)]:null;
+  const avgConv=avg(conv.map(r=>r.PERS_teste));
+  const avgAlt =avg(alt .map(r=>r.PERS_teste));
+
+  function item(color,title,note){
+    return`<div class="ins-item"><div class="ins-dot" style="background:${color}"></div><div><b>${title}</b>${note?`<span class="im">${note}</span>`:''}</div></div>`;
+  }
+  const worked=`<div class="ins-box">
+    <h4 class="gn">✅ O que mais funcionou</h4>
+    ${item('#22c55e','ALT generaliza melhor que CONV',`Gap mediano treino→teste: ALT ${medGapA?.toFixed(2)??'—'} vs CONV ${medGapC?.toFixed(2)??'—'}`)}
+    ${item('#22c55e','Arquiteturas menores têm média mais alta','n_inputs 4–6 apresentam PERS médio superior (~0.38–0.45 vs negativo para n≥13)')}
+    ${item('#22c55e','Picos absolutos vêm de n_inputs 11–13','Melhor CONV: 11 inputs / 22 nh · Melhor ALT: 13 inputs / 26 nh')}
+    ${item('#22c55e','R6 CONV atingiu desempenho recorde','PERS_teste máx 0.826 vs 0.618 da R5 — nova série de dados valeu')}
+    ${item('#22c55e','MAE do melhor ALT (A0371) é excelente',`${bestAlt?.MAE_teste!=null?bestAlt.MAE_teste.toFixed(1)+' cm — menor que o melhor CONV ('+bestConv?.MAE_teste?.toFixed(1)+' cm)':''}`)}
+  </div>`;
+
+  const todo=`<div class="ins-box">
+    <h4 class="yn">🔧 O que pode ser mais trabalhado</h4>
+    ${item('#f59e0b','Alta variância entre rotações','Mesma arquitetura R6_M09 varia de −6 a +0.82 só pela divisão dos dados → cross-validation ajudaria')}
+    ${item('#f59e0b','Overfitting generalizado',`CONV: mediana do gap treino-teste ${medGapC?.toFixed(2)??'—'} · Regularização (L2 / dropout) pode ajudar`)}
+    ${item('#f59e0b',`Apenas ${pct(g70c,conv.length)} CONV e ${pct(g70a,alt.length)} ALT atingem PERS ≥ 0.70`,'Margem enorme de melhoria: mais de mil modelos ficam abaixo desse limiar')}
+    ${item('#f59e0b','Janela temporal dos inputs (P) pouco explorada','R6 testou poucos valores de P — variar mais pode revelar configurações melhores')}
+    ${item('#f59e0b','Selecionar arquitetura com base nos resultados','Focar próxima rodada em n_inputs 11–13, nh 22–26, com mais rotações')}
+  </div>`;
+  document.getElementById('ins-learn').innerHTML=worked+todo;
+}
 
 function fill(id,vals){const el=document.getElementById(id);el.innerHTML='<option value="">Todos</option>'+vals.map(v=>`<option>${v}</option>`).join('');}
 
@@ -660,7 +648,6 @@ async function loadExcel(evt){
     fill('sel-nh',[...new Set(RAW.map(r=>r.neuronios))].sort((a,b)=>+a-+b));
     fill('sel-ni',[...new Set(RAW.map(r=>r.n_inputs))].sort((a,b)=>+a-+b));
     af();
-    prePopulatePeakCache();
     stat.textContent=`✓ ${nd.length} modelos de "${file.name}"`;stat.className='ustat ok';
     document.querySelector('.up-card').classList.add('ok-xlsx');
   }catch(e){stat.textContent=`⚠ Erro: ${e.message}`;stat.className='ustat warn';}
@@ -770,6 +757,9 @@ function rt(){
       <td>${r.score_equilibrio!=null?`<span class="${r.score_equilibrio>0.35?'g':r.score_equilibrio>0.2?'m':'b'}">${f4(r.score_equilibrio)}</span>`:'—'}</td>
       <td>${r.MAE_val!=null?f2(r.MAE_val):'—'}</td><td>${r.MAE_teste!=null?f2(r.MAE_teste):'—'}</td>
       <td>${r.E95_teste!=null?r.E95_teste.toFixed(1):'—'}</td>
+      <td>${r.CE_teste!=null?`<span class="${r.CE_teste>0.4?'g':r.CE_teste>0.2?'m':'b'}">${r.CE_teste.toFixed(3)}</span>`:'<span style="color:var(--br)">—</span>'}</td>
+      <td>${r.peak_mae_pct!=null?`<span class="${r.peak_mae_pct<5?'g':r.peak_mae_pct<12?'m':'b'}">${r.peak_mae_pct.toFixed(1)}%</span>`:'<span style="color:var(--br)">—</span>'}</td>
+      <td>${r.peak_bias_cm!=null?`<span class="${Math.abs(r.peak_bias_cm)<20?'g':Math.abs(r.peak_bias_cm)<50?'m':'b'}">${r.peak_bias_cm>0?'+':''}${r.peak_bias_cm.toFixed(0)}cm</span>`:'<span style="color:var(--br)">—</span>'}</td>
       <td class="mu2">${r.neuronios}</td><td class="mu2">${r.n_inputs}</td>
       <td>${hasP?'🌊':'<span style="color:var(--br)">·</span>'}</td>
     </tr>`;
@@ -788,153 +778,41 @@ function cp(d){const t=Math.ceil(FLT.length/ps);pg=Math.max(0,Math.min(pg+d,t-1)
 // FETCH PREVISÕES DO GITHUB (sob demanda)
 // ════════════════════════════════════════════════════
 const FETCH_ERR={};
-const FETCH_OBS=new Map(); // obs extraído do CSV (alinhado com preds)
-async function fetchPreds(mn,matNome){
+async function fetchPreds(mn){
   if(PRED_IDX.has(mn))return PRED_IDX.get(mn);
   const c=ghCfg();
-  const fileId=matNome||mn;
-  const enc=encodeURIComponent(fileId);
+  const enc=encodeURIComponent(mn);
   const url=`${c.base}/modelos/${enc}/${enc}_previsoes.csv`;
   try{
     const resp=await fetch(url);
     if(!resp.ok){FETCH_ERR[mn]={url,status:resp.status,msg:`HTTP ${resp.status}`};return null;}
     const text=await resp.text();
-    const preds=[],obsRows=[];
-    for(const line of text.trim().split('\n')){
-      const cols=line.trim().split(',');
-      if(cols.length>=4){
-        // Formato 4 colunas: timestamp,event_id,obs,pred
-        const p=parseFloat(cols[3]);
-        if(!isNaN(p)){
-          preds.push(p);
-          obsRows.push([cols[0],parseInt(cols[1]),parseFloat(cols[2])]);
-        }
-      } else {
-        // Formato legado: uma coluna (pred)
-        const p=parseFloat(cols[0]);
-        if(!isNaN(p)) preds.push(p);
+    const lines=text.trim().split(String.fromCharCode(10));
+    let result;
+    if(lines[0]&&lines[0].includes(',')){
+      // Formato rico (R6): dt,ev,obs,pred
+      const preds=[],obsArr=[];
+      for(const line of lines){
+        const pts=line.trim().split(',');
+        if(pts.length<4)continue;
+        const predv=parseFloat(pts[3]);
+        const obsv=parseFloat(pts[2]);
+        if(isNaN(predv))continue;
+        preds.push(predv);
+        obsArr.push([pts[0],parseInt(pts[1])||0,obsv]);
       }
+      if(!preds.length){FETCH_ERR[mn]={url,status:200,msg:`CSV rico vazio (${text.length} bytes)`};return null;}
+      result={preds,obsArr,isRich:true};
+    } else {
+      // Formato legado (R5): um float por linha
+      const vals=lines.map(v=>parseFloat(v.trim())).filter(v=>!isNaN(v));
+      if(!vals.length){FETCH_ERR[mn]={url,status:200,msg:`CSV vazio ou sem números (${text.length} bytes)`};return null;}
+      result=vals;
     }
-    if(!preds.length){FETCH_ERR[mn]={url,status:200,msg:`CSV vazio ou sem números (${text.length} bytes)`};return null;}
-    PRED_IDX.set(mn,preds);
-    if(obsRows.length===preds.length) FETCH_OBS.set(mn,obsRows);
-    return preds;
+    PRED_IDX.set(mn,result);
+    const shyd=document.getElementById('s-hyd');if(shyd)shyd.textContent=RAW.filter(r=>r.tem_previsao||PRED_IDX.has(r.modelo)).length;
+    return result;
   }catch(e){FETCH_ERR[mn]={url,status:'ERR',msg:String(e)};return null;}
-}
-
-// ════════════════════════════════════════════════════
-// VISTA FAMÍLIAS
-// ════════════════════════════════════════════════════
-let viewMode='tabela', famMetric='media_pers';
-
-function toggleView(mode){
-  viewMode=mode;
-  document.getElementById('vbtn-tab').classList.toggle('active',mode==='tabela');
-  document.getElementById('vbtn-fam').classList.toggle('active',mode==='familias');
-  document.getElementById('mbar-wrap').style.display=mode==='familias'?'flex':'none';
-  document.getElementById('fam-view').style.display=mode==='familias'?'block':'none';
-  const hide=mode==='familias';
-  ['.sg','.cg2x','.cf','.cg2','.cg3','.tc','.fbar'].forEach(sel=>{
-    document.querySelectorAll(sel).forEach(el=>el.style.display=hide?'none':'');
-  });
-  if(mode==='familias')buildFamiliaView();
-}
-
-function setMetric(metric,btn){
-  famMetric=metric;
-  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  buildFamiliaView();
-}
-
-function metricVal(r,metric){
-  return r[metric]!=null?r[metric]:null;
-}
-
-function metricLabel(metric){
-  return {media_pers:'PERS Geral',PERS_treino:'PERS Treino',PERS_validacao:'PERS Val',PERS_teste:'PERS Teste',score_equilibrio:'Equilíbrio'}[metric]||metric;
-}
-
-function getFamily(r){
-  const fr=(r.fonte_rodada||'').toUpperCase();
-  if(r.tipo==='CONV') return {key:'CONV',label:'4h — Convencional',sub:'Modelos convencionais',color:'var(--conv)'};
-  if(fr.includes('QUINTA')||fr.includes('R5_R7')||fr.includes('RODADA_R7'))
-    return {key:'ALT_R5',label:'4h ALT — Quinta Rodada (R5)',sub:'10 combos · rotação R7',color:'var(--alt)'};
-  if(fr.includes('SEXTA'))
-    return {key:'ALT_R6',label:'4h ALT — Sexta Rodada (R6)',sub:'10 combos × 25 rotações',color:'var(--alt)'};
-  return {key:'OUTRO',label:'4h — Outros',sub:'',color:'#94a3b8'};
-}
-
-function buildFamiliaView(){
-  const grid=document.getElementById('fam-grid');if(!grid)return;
-  // Agrupar modelos
-  const groups=new Map();
-  for(const r of RAW){
-    const fam=getFamily(r);
-    if(!groups.has(fam.key))groups.set(fam.key,{fam,models:[]});
-    groups.get(fam.key).models.push(r);
-  }
-  // Ordenar grupos e construir HTML
-  const order=['CONV','ALT_R5','ALT_R6','OUTRO'];
-  grid.innerHTML='';
-  order.forEach(key=>{
-    if(!groups.has(key))return;
-    const {fam,models}=groups.get(key);
-    grid.appendChild(buildFamCard(fam,models));
-  });
-}
-
-function buildFamCard(fam,models){
-  const metric=famMetric;
-  const sorted=models.filter(r=>metricVal(r,metric)!=null)
-    .sort((a,b)=>(metricVal(b,metric)||0)-(metricVal(a,metric)||0));
-  const threshold=0.5;
-  const above=sorted.filter(r=>(metricVal(r,metric)||0)>=threshold).length;
-  const top=sorted.slice(0,10);
-  const best=metricVal(sorted[0],metric)||0;
-
-  const col=v=>v>=0.8?'#4ade80':v>=0.6?'#fbbf24':'#f87171';
-  const items=top.map((r,i)=>{
-    const v=metricVal(r,metric)??0;
-    const pct=best>0?(v/best*100):0;
-    const mae=r.MAE_teste!=null?r.MAE_teste.toFixed(1)+' cm':'—';
-    const name=r.combo_id||r.modelo.slice(-20);
-    const encm=encodeURIComponent(r.modelo);
-    return `<div class="fam-item" onclick="openFromFam('${encm}')">
-      <span class="fam-rank">${i+1}</span>
-      <div class="fam-info">
-        <div class="fam-name" title="${r.modelo}">${name}</div>
-        <div class="fam-mae">MAE teste ${mae}</div>
-      </div>
-      <div class="fam-right">
-        <div class="fam-val" style="color:${col(v)}">${v.toFixed(3)}</div>
-        <div class="fam-bar-wrap"><div class="fam-bar-fill" style="width:${pct.toFixed(0)}%;background:${col(v)}"></div></div>
-      </div>
-    </div>`;
-  }).join('');
-
-  const card=document.createElement('div');
-  card.className='fam-card';
-  card.innerHTML=`
-    <div class="fam-card-hdr">
-      <div>
-        <h4 style="color:${fam.color}">${fam.label}</h4>
-        <div class="fam-subtitle">${fam.sub}</div>
-      </div>
-      <div class="fam-cnt">${above} de ${models.length}<br>acima de ${threshold}</div>
-    </div>
-    <div class="fam-body">${items||'<div style="color:var(--mu);font-size:.75rem;padding:8px 0">Sem dados</div>'}</div>`;
-  return card;
-}
-
-function openFromFam(enc){
-  // Mudar para vista tabela, filtrar e abrir painel
-  const mn=decodeURIComponent(enc);
-  const r=RAW.find(x=>x.modelo===mn);if(!r)return;
-  selRow=r;selModelName=mn;
-  const dp=document.getElementById('dp');dp.classList.add('open');
-  document.getElementById('dp-backdrop').classList.add('open');
-  _renderDetailPanel(r);
 }
 
 // ════════════════════════════════════════════════════
@@ -944,110 +822,62 @@ async function showDetail(enc,trEl){
   const mn=decodeURIComponent(enc);
   const r=RAW.find(x=>x.modelo===mn);if(!r)return;
   document.querySelectorAll('#tbody tr').forEach(t=>t.classList.remove('sel'));
-  if(trEl)trEl.classList.add('sel');
-  selRow=r;selModelName=mn;
+  trEl.classList.add('sel');selRow=r;selModelName=mn;
   const dp=document.getElementById('dp');dp.classList.add('open');
   document.getElementById('dp-backdrop').classList.add('open');
-  _renderDetailPanel(r);
-}
-
-async function _renderDetailPanel(r){
-  const mn=r.modelo;
-  const fileId=r.mat_nome||mn;
   document.getElementById('dp-title').textContent=r.combo_id||r.modelo;
   document.getElementById('dp-sub').textContent=`${r.tipo} · ${r.fonte_rodada}`;
 
   const c=ghCfg();
-  const enc2=encodeURIComponent(fileId);
+  const enc2=encodeURIComponent(mn);
   const matUrl=`${c.base}/modelos/${enc2}/${enc2}.mat`;
   const csvUrl=`${c.base}/modelos/${enc2}/${enc2}_previsoes.csv`;
 
-  // Tags
-  const isConv=r.tipo==='CONV';
-  const tagTipo=`<span class="dp-tag ${isConv?'t-conv':'t-tipo'}">${r.tipo}</span>`;
-  const tagRot=r.rotacao?`<span class="dp-tag t-rot">rotação ${r.rotacao}</span>`:'';
-  const tagNh=`<span class="dp-tag t-info">${r.neuronios} neurônios</span>`;
-  const tagNi=`<span class="dp-tag t-info">${r.n_inputs} inputs</span>`;
-  const tagNtot=`<span class="dp-tag t-info">N=${r.N_treino+r.N_validacao+r.N_teste}</span>`;
-  const rodLabel=(r.fonte_rodada||'').replace('RNA_4H_','').replace(/_/g,' ').toLowerCase();
-  const tagRod=`<span class="dp-tag t-info">${rodLabel}</span>`;
-
-  // PERS barras horizontais
-  const persRows=[
-    ['Geral', r.media_pers],
-    ['Treino', r.PERS_treino],
-    ['Validação', r.PERS_validacao],
-    ['Teste', r.PERS_teste],
-  ].map(([lbl,v])=>{
-    const col=v==null?'#475569':v>=0.8?'#4ade80':v>=0.6?'#fbbf24':'#f87171';
-    const pct=v!=null?Math.max(0,Math.min(100,v*100)):0;
-    const neg=v!=null&&v<0?`<span style="color:#f87171;font-size:.65rem">⚠</span> `:'';
-    return `<div class="hbar-row">
-      <span class="hbar-label">${lbl}</span>
-      <div class="hbar-track"><div class="hbar-fill" style="width:${pct}%;background:${col}"></div></div>
-      <span class="hbar-val" style="color:${col}">${neg}${v!=null?v.toFixed(3):'—'}</span>
-    </div>`;
-  }).join('');
-
-  // MAE grid
-  const maeGrid=[
-    ['Treino',r.MAE_treino,r.E95_treino],
-    ['Val',   r.MAE_val,   r.E95_val],
-    ['Teste', r.MAE_teste, r.E95_teste],
-  ].map(([lbl,mae,e95])=>`
-    <div class="err-cell">
-      <div class="el">${lbl}</div>
-      <div class="ev">${mae!=null?mae.toFixed(1):'—'} cm</div>
-      <div class="el" style="margin-top:4px">E95</div>
-      <div class="ev" style="font-size:.78rem">${e95!=null?e95.toFixed(1):'—'} cm</div>
-    </div>`).join('');
-
-  const dprow=(k,v)=>`<div class="dp-row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  const pg2=(k)=>{const v=r[k];const col=v==null?'#94a3b8':v>=0.8?'#22c55e':v>=0.6?'#f59e0b':'#ef4444';const pct=v!=null?Math.max(0,Math.min(100,v*100)):0;return `<div class="pc"><div class="pl">${k.replace('PERS_','PERS ')}</div><div class="pv" style="color:${col}">${v!=null?v.toFixed(4):'—'}</div><div class="pb" style="background:${col};width:${pct}%"></div></div>`;}
+  const dprow=(k,v,cls='')=>`<div class="dp-row"><span class="k">${k}</span><span class="v ${cls}">${v}</span></div>`;
   const ghBtn=(lbl,icon,url,fn)=>`<a class="fbtn" href="${url}" target="_blank" download="${fn}"><span class="fi">${icon}</span><div class="fd"><div class="fn">${lbl}</div><div class="fs">${fn}</div></div><span class="fa">↓ GitHub</span></a>`;
 
   document.getElementById('dp-body').innerHTML=`
-    <div class="dp-tags">${tagTipo}${tagRod}${tagRot}${tagNh}${tagNi}${tagNtot}</div>
-
-    <div class="dp-sec"><h4>Persistência por recorte</h4>
-      <div class="hbar-wrap">${persRows}</div>
-      ${dprow('Spread PERS',f4(r.spread_pers))}
-      ${dprow('Score Equilíbrio',f4(r.score_equilibrio))}
-    </div>
-
-    <div class="dp-sec"><h4>Erro em centímetros</h4>
-      <div class="err-grid3">${maeGrid}</div>
-      ${dprow('CE Treino',f4(r.CE_treino))} ${dprow('CE Val',f4(r.CE_val))} ${dprow('CE Teste',f4(r.CE_teste))}
-    </div>
-
     <div class="dp-sec" id="dp-hydro-sec">
-      <h4>🌊 Hidrogramas — por Evento</h4>
+      <h4>🌊 Hidrogramas</h4>
       <div class="preds-loading"><div class="spin-sm"></div>&nbsp;Buscando previsões do GitHub…</div>
     </div>
-
-    <div class="dp-sec" id="dp-scatter-sec" style="display:none">
-      <h4>Dispersão Observado × RNA</h4>
-      <div class="scatter-row">
-        <div><div class="scatter-lbl">Validação · <span id="sc-n-val">—</span> pts</div><div class="scatter-cw"><canvas id="sc-val"></canvas></div></div>
-        <div><div class="scatter-lbl">Teste · <span id="sc-n-te">—</span> pts</div><div class="scatter-cw"><canvas id="sc-te"></canvas></div></div>
-      </div>
+    <div class="dp-sec"><h4>PERS</h4>
+      <div class="pg4">${pg2('PERS_treino')}${pg2('PERS_validacao')}${pg2('PERS_teste')}${pg2('PERS_geral')}</div>
+      ${dprow('Média PERS',f4(r.media_pers))}${dprow('Spread',f4(r.spread_pers),r.spread_pers!=null&&r.spread_pers<0.1?'g':r.spread_pers!=null&&r.spread_pers>0.2?'b':'')}
+      ${dprow('Score Equilíbrio',f4(r.score_equilibrio),r.score_equilibrio!=null&&r.score_equilibrio>=0.9?'g':'')}
     </div>
-
-    <div class="dp-sec" id="dp-pico-sec" style="display:none">
-      <!-- preenchido por renderPeakSection() após carregar previsões -->
+    <div class="dp-sec"><h4>MAE &amp; E95 (cm)</h4>
+      ${dprow('MAE Val',f2(r.MAE_val)+' cm')}${dprow('MAE Teste',f2(r.MAE_teste)+' cm')}
+      ${dprow('E95 Val',r.E95_val!=null?r.E95_val.toFixed(1)+' cm':'—')}${dprow('E95 Teste',r.E95_teste!=null?r.E95_teste.toFixed(1)+' cm':'—')}
     </div>
-
+    ${r.peak_mae_pct!=null?`<div class="dp-sec"><h4>🎯 Desempenho nos Picos</h4>
+      ${dprow('Erro no Pico (médio)',r.peak_mae_pct.toFixed(1)+'%',r.peak_mae_pct<5?'g':r.peak_mae_pct<12?'':' b')}
+      ${dprow('Viés no Pico',(r.peak_bias_cm>0?'+':'')+r.peak_bias_cm.toFixed(0)+' cm',Math.abs(r.peak_bias_cm)<20?'g':Math.abs(r.peak_bias_cm)<50?'':'b')}
+      ${dprow('Timing do Pico',(r.peak_timing_h>0?'+':'')+r.peak_timing_h.toFixed(1)+' h',Math.abs(r.peak_timing_h)<8?'g':Math.abs(r.peak_timing_h)<20?'':' b')}
+      ${dprow('Eventos analisados',r.n_eventos_pico+' eventos')}
+    </div>`:''}
+    <div id="dp-peak-sec"></div>
+    <div class="dp-sec"><h4>CE</h4>
+      ${dprow('CE Treino',f4(r.CE_treino))}${dprow('CE Val',f4(r.CE_val))}${dprow('CE Teste',f4(r.CE_teste))}${dprow('CE Geral',f4(r.CE_geral))}
+    </div>
     <div class="dp-sec"><h4>Arquivos</h4>
-      ${ghBtn('Modelo MATLAB (.mat)','🧠',matUrl,mn+'.mat')}
-      ${ghBtn('Previsões (.csv)','📈',csvUrl,mn+'_previsoes.csv')}
+      ${ghBtn('MATLAB (.mat)','🧠',matUrl,mn+'.mat')}
+      ${ghBtn('Previsões CSV','📈',csvUrl,mn+'_previsoes.csv')}
     </div>
     <div class="dp-sec"><h4>Configuração</h4>
-      ${dprow('N Treino',r.N_treino)} ${dprow('N Validação',r.N_validacao)} ${dprow('N Teste',r.N_teste)}
+      ${dprow('Tipo',r.tipo)}${dprow('Neurônios',r.neuronios)}${dprow('Inputs',r.n_inputs)}
+      ${dprow('N Treino',r.N_treino)}${dprow('N Val',r.N_validacao)}${dprow('N Teste',r.N_teste)}
+      ${dprow('Status',r.status||'—')}${dprow('Rotação',r.rotacao||'—')}
     </div>`;
 
-  // Buscar previsões e montar hidrogramas + scatter
-  const preds=await fetchPreds(mn,r.mat_nome);
-  // Preferir obs do próprio CSV (alinhamento garantido); fallback para observados.json
-  const obs=FETCH_OBS.get(mn)||(r.obs_key?OBS[r.obs_key]:null);
+  // Async: fetch predictions and render hydro
+  const fetchResult=await fetchPreds(mn);
+  let preds=null,obs=null;
+  if(fetchResult){
+    if(fetchResult.isRich){preds=fetchResult.preds;obs=fetchResult.obsArr;}
+    else{preds=fetchResult;obs=(r.obs_key&&OBS[r.obs_key])||OBS['R5_R7']||null;}
+  }
   let parts=null;
   if(preds&&obs&&r.N_treino){
     const nt=r.N_treino,nv=r.N_validacao,nts=r.N_teste;
@@ -1067,313 +897,7 @@ async function _renderDetailPanel(r){
   }
   const hydroSec=document.getElementById('dp-hydro-sec');
   if(hydroSec)hydroSec.outerHTML=buildHydroHtml(r,parts,preds);
-  if(parts){
-    initHydroCharts(parts,r.tipo);
-    renderScatterPlots(parts,r.tipo);
-    const ps=computePeakStats(parts);
-    renderPeakSection(ps);
-    updatePeakCharts(mn,ps,r);
-  }
-}
-
-function renderScatterPlots(parts,tipo){
-  const scSec=document.getElementById('dp-scatter-sec');
-  if(!scSec)return;
-  scSec.style.display='block';
-  const col=tipo==='CONV'?'rgba(56,189,248,.6)':'rgba(74,222,128,.6)';
-  ['val','te'].forEach(key=>{
-    const phase=key==='val'?'val':'teste';
-    const data=parts[phase].obs.map(([,,obsv],i)=>({x:obsv,y:parts[phase].pred[i]})).filter(p=>p.x!=null&&p.y!=null);
-    const nEl=document.getElementById(`sc-n-${key}`);if(nEl)nEl.textContent=data.length;
-    const canvas=document.getElementById(`sc-${key}`);if(!canvas)return;
-    if(CH[`sc-${key}`]){CH[`sc-${key}`].destroy();delete CH[`sc-${key}`];}
-    const allV=data.flatMap(p=>[p.x,p.y]);
-    const mn2=Math.min(...allV),mx=Math.max(...allV);
-    CH[`sc-${key}`]=new Chart(canvas,{
-      type:'scatter',
-      data:{datasets:[
-        {label:'RNA × Obs',data,backgroundColor:col,pointRadius:2.5,pointHoverRadius:4},
-        {label:'Acerto perfeito',data:[{x:mn2,y:mn2},{x:mx,y:mx}],type:'line',borderColor:'#475569',borderWidth:1,pointRadius:0,borderDash:[4,3]}
-      ]},
-      options:{
-        responsive:true,maintainAspectRatio:false,animation:{duration:0},
-        plugins:{legend:{labels:{boxWidth:8,font:{size:9}}},tooltip:{callbacks:{label:ctx=>`obs: ${ctx.raw.x?.toFixed(1)} | RNA: ${ctx.raw.y?.toFixed(1)}`}}},
-        scales:{
-          x:{title:{display:true,text:'observado (cm)',font:{size:8}},grid:{color:'#1e3422'},ticks:{maxTicksLimit:5,font:{size:8}}},
-          y:{title:{display:true,text:'RNA (cm)',font:{size:8}},grid:{color:'#1e3422'},ticks:{maxTicksLimit:5,font:{size:8}}}
-        }
-      }
-    });
-  });
-}
-
-// ════════════════════════════════════════════════════
-// PEAK SCATTER — gráficos globais de pico (acumulam conforme modelos abertos)
-// ════════════════════════════════════════════════════
-const PEAK_CACHE=new Map(); // mn → {pers, erroPico, vies, tipo, label}
-
-// Pré-popula PEAK_CACHE a partir dos campos pré-computados no JSON
-function prePopulatePeakCache(){
-  PEAK_CACHE.clear();
-  let n=0;
-  for(const r of RAW){
-    if(r.erroPico_teste==null||r.vies_pico_teste==null||r.PERS_teste==null) continue;
-    const mn=r.mat_nome||r.modelo;
-    PEAK_CACHE.set(mn,{pers:r.PERS_teste,erroPico:r.erroPico_teste,vies:r.vies_pico_teste,
-      tipo:r.tipo,label:mn,picoObsMax:r.pico_obs_max_teste??null,nEventos:r.n_eventos_teste??null});
-    n++;
-  }
-  if(n>0) _renderPeakScatter();
-}
-
-function updatePeakCharts(mn,peakStats,r){
-  const testeStats=peakStats.filter(p=>p.fase==='TE'&&p.err!=null);
-  if(!testeStats.length) return;
-  const avgErr=testeStats.reduce((s,p)=>s+p.err,0)/testeStats.length;
-  const avgVies=testeStats.reduce((s,p)=>s+p.vies,0)/testeStats.length;
-  const picoObsMax=+Math.max(...testeStats.map(p=>p.pkObs)).toFixed(1);
-  const nEventos=new Set(testeStats.map(p=>p.ev)).size;
-  PEAK_CACHE.set(mn,{pers:r.PERS_teste,erroPico:+avgErr.toFixed(2),vies:+avgVies.toFixed(1),
-    tipo:r.tipo,label:mn,picoObsMax,nEventos});
-  _renderPeakScatter();
-}
-
-// Bandas de cor calculadas dinamicamente a partir dos dados do cache
-const _BAND_CLRS=['rgba(148,163,184,.8)','rgba(59,130,246,.8)','rgba(16,185,129,.8)','rgba(245,158,11,.8)','rgba(239,68,68,.8)'];
-let _PICO_BANDS=[];  // preenchido em _renderPeakScatter
-function _picoColor(p){
-  if(p==null||!_PICO_BANDS.length) return 'rgba(148,163,184,.5)';
-  for(const b of _PICO_BANDS) if(p<b.lim) return b.clr;
-  return _PICO_BANDS[_PICO_BANDS.length-1].clr;
-}
-
-function _renderPeakScatter(){
-  // Calcular bandas dinâmicas por percentis dos valores reais
-  const allPicos=[];
-  PEAK_CACHE.forEach(e=>{if(e.picoObsMax!=null)allPicos.push(e.picoObsMax);});
-  if(allPicos.length>=5){
-    allPicos.sort((a,b)=>a-b);
-    const q=p=>allPicos[Math.min(Math.floor(p*(allPicos.length-1)),allPicos.length-1)];
-    const cuts=[q(.2),q(.4),q(.6),q(.8)].map(Math.round);
-    _PICO_BANDS=[
-      {lim:cuts[0], clr:_BAND_CLRS[0], label:`< ${cuts[0]} cm`},
-      {lim:cuts[1], clr:_BAND_CLRS[1], label:`${cuts[0]}–${cuts[1]} cm`},
-      {lim:cuts[2], clr:_BAND_CLRS[2], label:`${cuts[1]}–${cuts[2]} cm`},
-      {lim:cuts[3], clr:_BAND_CLRS[3], label:`${cuts[2]}–${cuts[3]} cm`},
-      {lim:Infinity,clr:_BAND_CLRS[4], label:`≥ ${cuts[3]} cm`},
-    ];
-    // Ajustar slider ao range real
-    const sliderEl=document.getElementById('pk-min-pico');
-    if(sliderEl){
-      const maxP=allPicos[allPicos.length-1];
-      const sliderMax=Math.ceil(maxP/100)*100;
-      sliderEl.max=sliderMax;
-      sliderEl.step=Math.max(25,Math.round(sliderMax/20/25)*25);
-    }
-  }
-  const minPico=+(document.getElementById('pk-min-pico')?.value||0);
-
-  // Acumular pontos por tipo, com cor individual por magnitude
-  const conv={sc:[],vies:[],sc_c:[],vies_c:[]};
-  const alt ={sc:[],vies:[],sc_c:[],vies_c:[]};
-  let nVis=0;
-
-  PEAK_CACHE.forEach(({pers,erroPico,vies,tipo,label,picoObsMax,nEventos})=>{
-    if(minPico>0 && (picoObsMax==null||picoObsMax<minPico)) return;
-    nVis++;
-    const clr=_picoColor(picoObsMax);
-    const picoStr=picoObsMax!=null?` | pico obs: ${picoObsMax} cm`:'';
-    const evStr=nEventos!=null?` | ev: ${nEventos}`:'';
-    const pt={x:pers,y:erroPico,label,_tip:`${label}${picoStr}${evStr}`};
-    const pv={x:pers,y:vies,   label,_tip:`${label}${picoStr}${evStr}`};
-    if(tipo==='CONV'){conv.sc.push(pt);conv.sc_c.push(clr);conv.vies.push(pv);conv.vies_c.push(clr);}
-    else             {alt.sc.push(pt); alt.sc_c.push(clr); alt.vies.push(pv); alt.vies_c.push(clr);}
-  });
-
-  const cntEl=document.getElementById('pk-sc-cnt');
-  const cntEl2=document.getElementById('pk-vies-cnt');
-  const sfx=`(${nVis} modelo${nVis!==1?'s':''})`;
-  if(cntEl)  cntEl.textContent=sfx;
-  if(cntEl2) cntEl2.textContent=sfx;
-
-  const tip=ctx=>{const r=ctx.raw;return r._tip||`${r.label}\nPERS: ${r.x?.toFixed(3)}  Valor: ${r.y?.toFixed(1)}`;};
-
-  const mk=(id,yLabel,yMin)=>{
-    const cv=document.getElementById(id);if(!cv)return;
-    if(CH[id]){CH[id].destroy();delete CH[id];}
-    const isErr=id==='c-pico-sc';
-    CH[id]=new Chart(cv,{type:'scatter',data:{datasets:[
-      {label:'CONV',data:isErr?conv.sc:conv.vies,
-       backgroundColor:isErr?conv.sc_c:conv.vies_c,
-       pointRadius:3.5,pointHoverRadius:5,pointStyle:'circle'},
-      {label:'ALT', data:isErr?alt.sc:alt.vies,
-       backgroundColor:isErr?alt.sc_c:alt.vies_c,
-       pointRadius:3.5,pointHoverRadius:5,pointStyle:'triangle'},
-    ]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:0},
-      plugins:{
-        legend:{labels:{boxWidth:8,font:{size:9},color:'#94a3b8',usePointStyle:true}},
-        tooltip:{callbacks:{label:tip}}},
-      scales:{
-        x:{title:{display:true,text:'PERS Teste',color:'#64748b',font:{size:8}},
-           ticks:{color:'#94a3b8',font:{size:8},maxTicksLimit:6},grid:{color:'#1e3422'}},
-        y:{title:{display:true,text:yLabel,color:'#64748b',font:{size:8}},min:yMin,
-           ticks:{color:'#94a3b8',font:{size:8},maxTicksLimit:6},grid:{color:'#1e3422'}}
-      }
-    }});
-  };
-  mk('c-pico-sc','Erro pico (%)',0);
-  mk('c-pico-vies','Viés pico (cm)',undefined);
-
-  // Legenda de cores
-  const leg=document.getElementById('pk-pico-legend');
-  if(leg){
-    const items=PICO_BANDS.map(b=>
-      `<span style="display:flex;align-items:center;gap:3px">
-         <span style="width:9px;height:9px;border-radius:50%;background:${b.clr};display:inline-block;flex-shrink:0"></span>
-         ${b.label}
-       </span>`
-    );
-    items.push(`<span style="margin-left:8px;border-left:1px solid #334155;padding-left:8px">● CONV &nbsp; <span style="color:#f97316">▲</span> ALT</span>`);
-    leg.innerHTML=items.join('');
-  }
-}
-
-// ════════════════════════════════════════════════════
-// PEAK CLASSIFICATION — desempenho nos picos de cheia
-// ════════════════════════════════════════════════════
-function computePeakStats(parts){
-  const results=[];
-  const phList=[
-    {key:'treino',label:'TR',color:'#f59e0b'},
-    {key:'val',   label:'VL',color:'#3b82f6'},
-    {key:'teste', label:'TE',color:'#10b981'},
-  ];
-  for(const ph of phList){
-    for(const [ev,pts] of parts[ph.key].events){
-      const f=pts.filter(x=>x.obs!=null&&x.pred!=null);
-      if(!f.length) continue;
-      let piObs=0; f.forEach((x,i)=>{if(x.obs>f[piObs].obs)piObs=i;});
-      let piPred=0; f.forEach((x,i)=>{if(x.pred>f[piPred].pred)piPred=i;});
-      const pkObs=f[piObs].obs, pkPred=f[piPred].pred;
-      const err=pkObs>0?Math.abs(pkPred-pkObs)/pkObs*100:null;
-      const vies=pkPred-pkObs;
-      const timing=(piPred-piObs)*4; // cada passo = 4 h
-      let cls='—',clr='#64748b';
-      if(err!=null){
-        if(err<5)       {cls='Excelente';clr='#10a97c';}
-        else if(err<15) {cls='Bom';      clr='#22c55e';}
-        else if(err<30) {cls='Regular';  clr='#f59e0b';}
-        else            {cls='Ruim';     clr='#ef4444';}
-      }
-      results.push({ev,fase:ph.label,phColor:ph.color,pkObs,pkPred,err,vies,timing,cls,clr});
-    }
-  }
-  return results.sort((a,b)=>a.ev-b.ev);
-}
-
-function renderPeakSection(peakStats){
-  const el=document.getElementById('dp-pico-sec');
-  if(!el) return;
-  const valid=peakStats.filter(p=>p.err!=null);
-  if(!valid.length){el.style.display='none';return;}
-  el.style.display='block';
-
-  const avgErr=valid.reduce((s,p)=>s+p.err,0)/valid.length;
-  const avgVies=valid.reduce((s,p)=>s+p.vies,0)/valid.length;
-  const cnt={Excelente:0,Bom:0,Regular:0,Ruim:0};
-  valid.forEach(p=>{if(cnt[p.cls]!=null)cnt[p.cls]++;});
-
-  const card=(lbl,val,sub,cor='')=>
-    `<div class="pk-card"><div class="pk-label">${lbl}</div><div class="pk-val"${cor?` style="color:${cor}"`:''}>${val}</div><div class="pk-sub">${sub}</div></div>`;
-
-  const vClrAvg=avgVies>5?'#ef4444':avgVies<-5?'#3b82f6':'#10a97c';
-  const vLbl=avgVies>5?'superestima':avgVies<-5?'subestima':'neutro';
-  const cards=[
-    card('Erro médio',avgErr.toFixed(1)+'%','pico prev vs obs'),
-    card('Viés médio',(avgVies>0?'+':'')+avgVies.toFixed(1)+' cm',vLbl,vClrAvg),
-    card('Excelente',cnt.Excelente,'<5%','#10a97c'),
-    card('Bom',cnt.Bom,'5–15%','#22c55e'),
-    card('Regular',cnt.Regular,'15–30%','#f59e0b'),
-    card('Ruim',cnt.Ruim,'≥30%','#ef4444'),
-  ].join('');
-
-  const rows=peakStats.map(p=>{
-    const vClr=Math.abs(p.vies)>30?'#f59e0b':'#94a3b8';
-    const tClr=p.timing===0?'#10a97c':Math.abs(p.timing)<=8?'#f59e0b':'#ef4444';
-    const tLbl=p.timing>0?`+${p.timing}h (antec.)`:p.timing<0?`${p.timing}h (atras.)`:'0h (acerto)';
-    return`<tr>
-      <td>Ev ${p.ev}</td>
-      <td><span class="phase-badge" style="background:${p.phColor}">${p.fase}</span></td>
-      <td>${p.pkObs.toFixed(1)} cm</td>
-      <td>${p.pkPred.toFixed(1)} cm</td>
-      <td style="color:${p.clr};font-weight:700">${p.err!=null?p.err.toFixed(1)+'%':'—'}</td>
-      <td style="color:${vClr}">${p.vies>0?'+':''}${p.vies.toFixed(1)} cm</td>
-      <td style="color:${tClr}">${tLbl}</td>
-      <td style="color:${p.clr};font-weight:700">${p.cls}</td>
-    </tr>`;
-  }).join('');
-
-  el.innerHTML=`
-    <h4>🎯 Desempenho nos Picos de Cheia</h4>
-    <div class="pk-summary">${cards}</div>
-    <div style="position:relative;height:210px;margin:10px 0 4px">
-      <canvas id="pk-chart"></canvas>
-    </div>
-    <table class="pk-table">
-      <thead><tr><th>Evento</th><th>Fase</th><th>Pico obs</th><th>Pico prev</th><th>Erro %</th><th>Viés</th><th>Timing</th><th>Classif.</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div style="font-size:.6rem;color:#475569;margin-top:5px">
-      Timing: positivo = RNA antecipou o pico; negativo = atrasou. Viés = prev − obs no pico.
-      Classificação: Excelente &lt;5% · Bom 5–15% · Regular 15–30% · Ruim ≥30%.
-    </div>`;
-
-  // Gráfico: barras obs vs prev + linha de erro %
-  const pkCanvas=document.getElementById('pk-chart');
-  if(pkCanvas){
-    if(CH['pk-chart']){CH['pk-chart'].destroy();delete CH['pk-chart'];}
-    const labels=peakStats.map(p=>`Ev ${p.ev}`);
-    const barColorsObs=peakStats.map(p=>`${p.phColor}99`);
-    const barColorsPrev=peakStats.map(p=>p.clr+'cc');
-    CH['pk-chart']=new Chart(pkCanvas,{
-      data:{
-        labels,
-        datasets:[
-          {type:'bar',label:'Pico obs (cm)',data:peakStats.map(p=>p.pkObs),
-           backgroundColor:barColorsObs,borderColor:peakStats.map(p=>p.phColor),borderWidth:1,
-           yAxisID:'y',order:2},
-          {type:'bar',label:'Pico prev (cm)',data:peakStats.map(p=>p.pkPred),
-           backgroundColor:barColorsPrev,borderColor:peakStats.map(p=>p.clr),borderWidth:1.5,
-           yAxisID:'y',order:3},
-          {type:'line',label:'Erro % pico',data:peakStats.map(p=>p.err!=null?+p.err.toFixed(1):null),
-           borderColor:'#f8fafc',backgroundColor:'rgba(248,250,252,.15)',
-           borderWidth:1.5,pointRadius:3,pointBackgroundColor:peakStats.map(p=>p.clr),
-           tension:.3,yAxisID:'y2',order:1},
-        ]
-      },
-      options:{
-        responsive:true,maintainAspectRatio:false,animation:{duration:0},
-        interaction:{mode:'index',intersect:false},
-        plugins:{
-          legend:{labels:{boxWidth:9,font:{size:9},color:'#94a3b8'}},
-          tooltip:{callbacks:{
-            label:ctx=>{
-              if(ctx.dataset.yAxisID==='y2') return ` Erro: ${ctx.raw}%`;
-              return ` ${ctx.dataset.label.includes('obs')?'Obs':'Prev'}: ${ctx.raw?.toFixed(1)} cm`;
-            }
-          }}
-        },
-        scales:{
-          x:{ticks:{color:'#94a3b8',font:{size:8}},grid:{color:'#1e3422'}},
-          y:{position:'left',title:{display:true,text:'Nível (cm)',color:'#64748b',font:{size:8}},
-             ticks:{color:'#94a3b8',font:{size:8}},grid:{color:'#1e3422'}},
-          y2:{position:'right',title:{display:true,text:'Erro %',color:'#64748b',font:{size:8}},
-              ticks:{color:'#94a3b8',font:{size:8}},grid:{display:false},
-              min:0}
-        }
-      }
-    });
-  }
+  if(parts){initHydroCharts(parts,r.tipo);renderPeakTable(parts);}
 }
 
 // ════════════════════════════════════════════════════
@@ -1391,20 +915,25 @@ function buildHydroHtml(r, parts, preds){
     return `<div class="dp-sec"><h4>🌊 Hidrogramas</h4><div class="no-data">Dados de partição não disponíveis.</div></div>`;
   }
 
-  // Gerar botões para cada evento, agrupados por fase
+  // Gerar botões — um por evento (sem duplicatas entre fases)
   const phMeta=[
     {key:'treino',label:'TR',color:'#f59e0b'},
     {key:'val',   label:'VL',color:'#3b82f6'},
     {key:'teste', label:'TE',color:'#10b981'},
   ];
+  const allEvs=new Map(); // ev → fase dominante (fase com mais pontos)
+  phMeta.forEach(ph=>{
+    parts[ph.key].events.forEach((pts,ev)=>{
+      if(!allEvs.has(ev)||pts.length>allEvs.get(ev).n)
+        allEvs.set(ev,{n:pts.length,ph});
+    });
+  });
+  const sortedEvs=[...allEvs.keys()].sort((a,b)=>a-b);
   let first=true;
-  const btns=phMeta.map(ph=>{
-    const evs=[...parts[ph.key].events.keys()].sort((a,b)=>a-b);
-    return evs.map(ev=>{
-      const btn=`<button class="ev-btn${first?' active':''}" id="evbtn-${ev}" onclick="selectEvent(${ev})">Ev ${ev} <span class="phase-badge" style="background:${ph.color}">${ph.label}</span></button>`;
-      first=false;
-      return btn;
-    }).join('');
+  const btns=sortedEvs.map(ev=>{
+    const {ph}=allEvs.get(ev);
+    const btn=`<button class="ev-btn${first?' active':''}" id="evbtn-${ev}" onclick="selectEvent(${ev})">Ev ${ev} <span class="phase-badge" style="background:${ph.color}">${ph.label}</span></button>`;
+    first=false;return btn;
   }).join('');
 
   return `<div class="dp-sec"><h4>🌊 Hidrogramas — por Evento</h4>
@@ -1424,7 +953,7 @@ let _curParts=null, _curTipo=null, _evMeta=null;
 
 function initHydroCharts(parts, tipo){
   _curParts=parts; _curTipo=tipo;
-  // Montar mapa global de eventos: ev → {phaseLabel, phColor, data[]}
+  // Montar mapa global: ev → dados de TODAS as fases merged (evita perda de pontos em fronteiras)
   _evMeta=new Map();
   const phMeta=[
     {key:'treino',label:'Treino',   color:'#f59e0b'},
@@ -1432,12 +961,13 @@ function initHydroCharts(parts, tipo){
     {key:'teste', label:'Teste',    color:'#10b981'},
   ];
   phMeta.forEach(ph=>{
-    [...parts[ph.key].events.keys()].sort((a,b)=>a-b).forEach(ev=>{
-      _evMeta.set(ev,{label:ph.label,phColor:ph.color,data:parts[ph.key].events.get(ev)});
+    parts[ph.key].events.forEach((pts,ev)=>{
+      if(!_evMeta.has(ev)) _evMeta.set(ev,{label:ph.label,phColor:ph.color,data:[]});
+      _evMeta.get(ev).data.push(...pts);
     });
   });
   // Renderiza primeiro evento
-  const firstEv=[..._evMeta.keys()][0];
+  const firstEv=[..._evMeta.keys()].sort((a,b)=>a-b)[0];
   if(firstEv!=null) selectEvent(firstEv);
 }
 
@@ -1500,6 +1030,61 @@ function selectEvent(evNum){
   });
 }
 
+function renderPeakTable(parts){
+  const sec=document.getElementById('dp-peak-sec');
+  if(!sec)return;
+  // Juntar todos os eventos de todas as fases
+  const allEv=new Map();
+  const phColors={treino:'#f59e0b',val:'#3b82f6',teste:'#10b981'};
+  for(const[ph,p] of Object.entries(parts)){
+    p.events.forEach((pts,ev)=>{
+      if(!allEv.has(ev))allEv.set(ev,{pts:[],ph});
+      allEv.get(ev).pts.push(...pts);
+    });
+  }
+  const rows=[];
+  allEv.forEach((d,ev)=>{
+    const pts=d.pts.filter(x=>x.obs!=null&&x.pred!=null);
+    if(pts.length<2)return;
+    const obsV=pts.map(x=>x.obs),predV=pts.map(x=>x.pred);
+    const pkObs=Math.max(...obsV);
+    const iPkObs=obsV.indexOf(pkObs);
+    const iPkPred=predV.indexOf(Math.max(...predV));
+    const predAtPk=predV[iPkObs];
+    const erp=pkObs>0?Math.abs(predAtPk-pkObs)/pkObs*100:null;
+    const bias=predAtPk-pkObs;
+    const timH=(iPkPred-iPkObs)*4;
+    rows.push({ev,pkObs,predAtPk,erp,bias,timH,n:pts.length,ph:d.ph});
+  });
+  if(!rows.length){sec.innerHTML='';return;}
+  rows.sort((a,b)=>a.erp-b.erp);
+  const colERP=v=>v==null?'—':`<span class="${v<5?'g':v<15?'m':'b'}">${v.toFixed(1)}%</span>`;
+  const colBias=v=>`<span class="${Math.abs(v)<20?'g':Math.abs(v)<50?'m':'b'}">${v>0?'+':''}${v.toFixed(0)}</span>`;
+  const colTim=v=>`<span class="${Math.abs(v)<8?'g':Math.abs(v)<20?'m':'b'}">${v>0?'+':''}${v.toFixed(0)}h</span>`;
+  const phBadge=ph=>`<span style="display:inline-block;padding:1px 5px;border-radius:3px;font-size:.6rem;background:${phColors[ph]||'#475569'}20;color:${phColors[ph]||'#94a3b8'};border:1px solid ${phColors[ph]||'#475569'}40">${ph==='treino'?'TR':ph==='val'?'VL':'TE'}</span>`;
+  sec.innerHTML=`<div class="dp-sec"><h4>🎯 Desempenho por Evento — Acerto no Pico</h4>
+    <div style="overflow-x:auto"><table style="font-size:.69rem;width:100%">
+      <thead><tr style="background:var(--s2)">
+        <th style="padding:4px 7px;text-align:left;color:var(--mu);font-size:.61rem">Evento</th>
+        <th style="padding:4px 7px;text-align:left;color:var(--mu);font-size:.61rem">Fase</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Pico Obs</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Prev@Pico</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Erro %</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Viés (cm)</th>
+        <th style="padding:4px 7px;text-align:right;color:var(--mu);font-size:.61rem">Timing</th>
+      </tr></thead>
+      <tbody>${rows.map(r=>`<tr style="border-bottom:1px solid var(--br);cursor:pointer" onclick="selectEvent(${r.ev})">
+        <td style="padding:4px 7px;font-weight:600">Ev ${r.ev}</td>
+        <td style="padding:4px 7px">${phBadge(r.ph)}</td>
+        <td style="padding:4px 7px;text-align:right">${r.pkObs.toFixed(0)} cm</td>
+        <td style="padding:4px 7px;text-align:right">${r.predAtPk.toFixed(0)} cm</td>
+        <td style="padding:4px 7px;text-align:right">${colERP(r.erp)}</td>
+        <td style="padding:4px 7px;text-align:right">${colBias(r.bias)}</td>
+        <td style="padding:4px 7px;text-align:right">${colTim(r.timH)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>`;
+}
+
 function closePanel(){
   document.getElementById('dp').classList.remove('open');
   document.getElementById('dp-backdrop').classList.remove('open');
@@ -1507,100 +1092,6 @@ function closePanel(){
   selRow=null;_curParts=null;_evMeta=null;selModelName=null;
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel();});
-</script>
-
-<!-- ═══════════════════════════════════════════════
-     MAPA INTERATIVO — Leaflet + estações ANA
-════════════════════════════════════════════════ -->
-<script>
-(function initMapaBacia(){
-  // ── Dados das estações ─────────────────────────────────────────────
-  // Coordenadas: registro ANA/SGB (verificar em snirh.gov.br/hidroweb)
-  // Translação: estimativa média; varia conforme magnitude do evento
-  const ESTACOES = [
-    {
-      cod:'86472600', nome:'Santa Tereza', rio:'Rio Taquari',
-      desc:'Estação-alvo — onde o nível é previsto pelas RNAs',
-      tipo:'alvo', lat:-28.8584, lon:-51.7317, transl:null
-    },
-    {
-      cod:'86472000', nome:'Linha José Júlio', rio:'Rio das Antas',
-      desc:'Estação de montante — telemetria de alta frequência (ALT)',
-      tipo:'montante', lat:-28.7167, lon:-51.5386, transl:'~4–6 h'
-    },
-    {
-      cod:'86448000', nome:'Veranópolis', rio:'Rio das Antas',
-      desc:'Estação de apoio — bacia das Antas',
-      tipo:'apoio', lat:-28.9295, lon:-51.5578, transl:'~8–12 h'
-    },
-    {
-      cod:'86507000', nome:'Carreiro', rio:'Rio Carreiro',
-      desc:'Estação de apoio — afluente pelo rio Carreiro',
-      tipo:'apoio', lat:-28.8833, lon:-52.0083, transl:'~12–18 h'
-    },
-    {
-      cod:'86125130', nome:'Ituim', rio:'Rio Ituim',
-      desc:'Estação de apoio — afluente pelo rio Ituim',
-      tipo:'apoio', lat:-29.0533, lon:-51.5306, transl:'~10–14 h'
-    },
-    {
-      cod:'86125500', nome:'Prata Caxias', rio:'Rio Pelotas',
-      desc:'Estação de apoio — planalto, rio da Prata',
-      tipo:'apoio', lat:-29.1694, lon:-51.2611, transl:'~18–24 h'
-    },
-  ];
-
-  // ── Cores por tipo ─────────────────────────────────────────────────
-  const COR = { alvo:'#f59e0b', montante:'#3b82f6', apoio:'#4a8c3a' };
-
-  function svgDot(cor, r=7){
-    return L.divIcon({
-      className:'',
-      html:`<svg width="${r*2+2}" height="${r*2+2}"><circle cx="${r+1}" cy="${r+1}" r="${r}" fill="${cor}" stroke="#fff" stroke-width="2"/></svg>`,
-      iconSize:[r*2+2, r*2+2], iconAnchor:[r+1, r+1]
-    });
-  }
-
-  // ── Inicializar mapa ───────────────────────────────────────────────
-  const map = L.map('mapa-leaflet', {
-    center: [-28.95, -51.65], zoom: 9,
-    zoomControl: true, scrollWheelZoom: false
-  });
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-    maxZoom: 18
-  }).addTo(map);
-
-  // ── Marcadores e cards ────────────────────────────────────────────
-  const cardList = document.getElementById('bacia-cards-list');
-  ESTACOES.forEach(est => {
-    const cor = COR[est.tipo] || '#888';
-    const marker = L.marker([est.lat, est.lon], {icon: svgDot(cor)}).addTo(map);
-    marker.bindPopup(
-      `<strong>${est.nome}</strong><br>` +
-      `<span style="color:#555;font-size:.8em">${est.rio} · cód. ${est.cod}</span><br>` +
-      `<span style="font-size:.8em">${est.desc}</span>` +
-      (est.transl ? `<br><span style="color:#3d7a2e;font-weight:600;font-size:.8em">⏱ Translação: ${est.transl}</span>` : '')
-    );
-
-    // Card na lista lateral
-    const card = document.createElement('div');
-    card.className = 'bacia-card';
-    card.innerHTML =
-      `<div class="bacia-card-dot" style="background:${cor}"></div>` +
-      `<div class="bacia-card-info">` +
-        `<div class="bacia-card-nome">${est.nome}</div>` +
-        `<div class="bacia-card-desc">${est.desc}</div>` +
-        (est.transl ? `<span class="bacia-card-transl">⏱ ${est.transl} até Santa Tereza</span>` : '') +
-        `<div class="bacia-card-cod">${est.rio} · cód. ${est.cod}</div>` +
-      `</div>`;
-    card.addEventListener('mouseenter', () => marker.openPopup());
-    card.addEventListener('mouseleave', () => marker.closePopup());
-    card.addEventListener('click', () => { map.setView([est.lat, est.lon], 11); marker.openPopup(); });
-    cardList.appendChild(card);
-  });
-})();
 </script>
 </body>
 </html>
